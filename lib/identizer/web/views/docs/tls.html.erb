@@ -1,0 +1,19 @@
+<p class="muted"><a href="<%= prefix %>/docs">&larr; Docs</a></p>
+<article>
+  <h1>TLS &amp; mkcert</h1>
+  <p class="lead">Login URLs must be <span class="mono">https</span> — browser popup guards reject plain http —
+     so Identizer always listens over TLS.</p>
+
+  <h2>Default: self-signed</h2>
+  <p>With no cert provided, Identizer generates a self-signed cert under the config dir
+     (<span class="mono">cert.pem</span> / <span class="mono">key.pem</span>). Browsers will warn; for the
+     app's server-to-server calls (token / userinfo / AWS SDK) trust it:</p>
+  <pre>export SSL_CERT_FILE=…/cert.pem</pre>
+
+  <h2>Recommended: mkcert (locally trusted)</h2>
+  <pre>mkcert -install
+mkcert localhost 127.0.0.1
+bundle exec identizer --tls-cert ./localhost+1.pem --tls-key ./localhost+1-key.pem</pre>
+  <p>Or set <span class="mono">IDENTIZER_TLS_CERT</span> / <span class="mono">IDENTIZER_TLS_KEY</span>. A
+     locally-trusted cert means no browser warnings and no <span class="mono">SSL_CERT_FILE</span> juggling.</p>
+</article>

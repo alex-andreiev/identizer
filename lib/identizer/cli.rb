@@ -16,6 +16,7 @@ module Identizer
     def run
       config = Identizer.configuration
       parser(config).parse!(@argv)
+      config.apply_persisted_settings! # web-admin saved password/signing
       Server.start(config)
     end
 

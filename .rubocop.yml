@@ -45,6 +45,7 @@ Metrics/PerceivedComplexity:
 Metrics/ClassLength:
   Exclude:
     - "lib/identizer/handlers/**/*"
+    - "lib/identizer/configuration.rb"
 
 Metrics/BlockLength:
   Exclude:

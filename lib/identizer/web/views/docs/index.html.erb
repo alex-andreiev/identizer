@@ -1,0 +1,9 @@
+<h1>Docs</h1>
+<p class="lead">Bundled guides for wiring your app to Identizer.</p>
+<div class="card">
+  <ul>
+    <% pages.each do |page| %>
+      <li><a href="<%= prefix %>/docs/<%= page[:slug] %>"><%= h(page[:title]) %></a></li>
+    <% end %>
+  </ul>
+</div>

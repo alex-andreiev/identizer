@@ -14,11 +14,17 @@ module Identizer
         @store = context.store
         @minter = context.minter
         @sessions = context.sessions
+        @renderer = context.renderer
       end
 
       private
 
-      attr_reader :config, :store, :minter, :sessions
+      attr_reader :config, :store, :minter, :sessions, :renderer
+
+      # Render a web-admin page through the shared layout.
+      def page(template, request, nav:, title:, **locals)
+        html(renderer.render(template, nav: nav, title: title, prefix: request.script_name, **locals))
+      end
 
       def consume(code)
         sessions.delete(code)

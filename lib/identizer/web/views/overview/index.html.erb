@@ -1,0 +1,28 @@
+<h1>Overview</h1>
+<p class="lead">A local identity provider for developing and testing auth/SSO integrations.</p>
+
+<div class="card">
+  <table>
+    <tr><th>Base URL</th><td class="mono"><%= h(config.base_url) %></td></tr>
+    <tr><th>Issuer</th><td class="mono"><%= h(config.issuer) %></td></tr>
+    <tr><th>Directory entries</th><td><%= count %> &middot; <a href="<%= prefix %>/directory">manage</a></td></tr>
+    <tr><th>Token signing</th><td><%= h(config.signing.to_s.upcase) %> &middot; <a href="<%= prefix %>/settings">change</a></td></tr>
+    <tr><th>LDAP base DN</th><td class="mono"><%= h(config.ldap_base_dn) %></td></tr>
+  </table>
+</div>
+
+<h2>Provider setup cheatsheet</h2>
+<p class="muted">Values to paste into your app's integration form. The runtime is identical for all of them.</p>
+<% config.providers.each do |provider| %>
+  <div class="card">
+    <strong><%= h(provider[:title]) %></strong>
+    <% if provider[:note] %><p class="muted"><%= h(provider[:note]) %></p><% end %>
+    <table>
+      <% provider[:fields].each do |label, value| %>
+        <tr><th><%= h(label) %></th><td class="mono"><%= h(value) %></td></tr>
+      <% end %>
+    </table>
+  </div>
+<% end %>
+
+<p class="muted">New here? Read the <a href="<%= prefix %>/docs">docs</a>.</p>

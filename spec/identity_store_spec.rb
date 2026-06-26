@@ -46,14 +46,39 @@ RSpec.describe Identizer::IdentityStore::ConfigStore do
     expect(identity.email).to eq("stranger@example.com")
   end
 
-  it "returns the configured identity (with claims) for a known email" do
-    store = described_class.new(path: path, seed: [{ email: "known@example.com", given_name: "Known" }])
-    expect(store.identity_for("known@example.com").to_h).to include("given_name" => "Known")
+  it "maps LDAP attributes to OIDC claims for a known email" do
+    store = described_class.new(path: path, seed: [{ mail: "known@example.com", givenName: "Known", sn: "User" }])
+    claims = store.identity_for("known@example.com").to_h
+    expect(claims).to include("given_name" => "Known", "family_name" => "User")
   end
 
   it "survives a corrupt config file by returning the seed" do
     File.write(path, "{ not json")
     store = described_class.new(path: path, seed: [{ email: "seed@example.com" }])
     expect(store.emails).to eq(["seed@example.com"])
+  end
+
+  describe "directory management" do
+    subject(:store) { described_class.new(path: path) }
+
+    it "upserts a new entry" do
+      store.upsert("mail" => "new@example.com", "givenName" => "New")
+      expect(store.entries.map(&:mail)).to eq(["new@example.com"])
+      expect(store.entries.first["givenName"]).to eq("New")
+    end
+
+    it "replaces an existing entry keyed by mail" do
+      store.upsert("mail" => "a@example.com", "sn" => "Old")
+      store.upsert("mail" => "a@example.com", "sn" => "New")
+      expect(store.entries.size).to eq(1)
+      expect(store.entries.first["sn"]).to eq("New")
+    end
+
+    it "deletes an entry by mail" do
+      store.upsert("mail" => "a@example.com")
+      store.upsert("mail" => "b@example.com")
+      store.delete("a@example.com")
+      expect(store.emails).to eq(["b@example.com"])
+    end
   end
 end

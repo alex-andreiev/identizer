@@ -30,15 +30,18 @@ RSpec.describe "mounted under a sub-path" do
     end.to_app
   end
 
-  it "serves the dashboard at the mount point" do
+  it "serves the overview at the mount point" do
     get "/idp/"
     expect(last_response.status).to eq(200)
     expect(last_response.body).to include("Identizer")
   end
 
-  it "points the dashboard form at the mounted config path" do
+  it "points the nav and directory form at the mounted paths" do
     get "/idp/"
-    expect(last_response.body).to include('action="/idp/config"')
+    expect(last_response.body).to include('href="/idp/directory"')
+
+    get "/idp/directory"
+    expect(last_response.body).to include('action="/idp/directory"')
   end
 
   it "points the login form at the mounted select path" do

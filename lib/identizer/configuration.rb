@@ -5,7 +5,7 @@ module Identizer
   # the Rails.* / ENV reads of the original emulator with one explicit object.
   class Configuration
     attr_accessor :host, :port, :tls_cert_path, :tls_key_path, :config_dir,
-                  :shared_password, :signing, :hs256_key, :scheme, :url_host
+                  :shared_password, :signing, :hs256_key, :scheme, :url_host, :ldap_base_dn
     attr_writer :identity_store, :base_url, :issuer, :seed_identities, :providers
 
     def initialize
@@ -19,6 +19,7 @@ module Identizer
       @hs256_key = "identizer-development-key"
       @scheme = "https"
       @url_host = "localhost"
+      @ldap_base_dn = "dc=identizer,dc=local"
       @seed_identities = []
     end
 
@@ -36,19 +37,40 @@ module Identizer
     end
 
     def seed_identities
-      Array(@seed_identities).map { |entry| Identity.from(entry) }
+      Array(@seed_identities).map { |entry| DirectoryEntry.from(entry, base_dn: ldap_base_dn) }
     end
 
     def identity_store
       @identity_store ||= IdentityStore::ConfigStore.new(
         path: File.join(config_dir, "config.json"),
-        seed: seed_identities
+        seed: seed_identities,
+        base_dn: ldap_base_dn
       )
     end
 
     # Cheatsheet rendered on the dashboard. Override to match your app's stack.
     def providers
       @providers || default_providers
+    end
+
+    def settings_path
+      File.join(config_dir, "settings.json")
+    end
+
+    # Apply settings previously saved from the web admin (password, signing mode).
+    # Called at boot; explicit flags/config still override afterwards.
+    def apply_persisted_settings!
+      data = JSON.parse(File.read(settings_path))
+      self.shared_password = data["shared_password"] if data["shared_password"]
+      self.signing = data["signing"].to_sym if data["signing"]
+      self
+    rescue StandardError
+      self
+    end
+
+    def persist_settings!
+      FileUtils.mkdir_p(config_dir)
+      File.write(settings_path, JSON.generate("shared_password" => shared_password, "signing" => signing.to_s))
     end
 
     private

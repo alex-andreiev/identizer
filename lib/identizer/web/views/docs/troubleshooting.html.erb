@@ -1,0 +1,25 @@
+<p class="muted"><a href="<%= prefix %>/docs">&larr; Docs</a></p>
+<article>
+  <h1>Troubleshooting</h1>
+
+  <h2>"Unknown user" / access_denied on login</h2>
+  <p>The email isn't in the <a href="<%= prefix %>/directory">Directory</a>, or the password didn't match the
+     shared password in <a href="<%= prefix %>/settings">Settings</a>. Add the entry or fix the password.</p>
+
+  <h2>Browser blocks the popup / cert warnings</h2>
+  <p>Login must be https. Use a locally-trusted cert via <a href="<%= prefix %>/docs/tls">mkcert</a>, or accept
+     the self-signed cert in the browser once.</p>
+
+  <h2>App can't reach the token / userinfo endpoint (SSL error)</h2>
+  <p>Server-to-server calls must trust the cert. Set <span class="mono">SSL_CERT_FILE</span> for the app
+     process, or use mkcert. See <a href="<%= prefix %>/docs/tls">TLS</a>.</p>
+
+  <h2>id_token signature won't verify</h2>
+  <p>The default HS256 key is shared and meant for clients that don't verify. If your client verifies, switch
+     to RS256 in <a href="<%= prefix %>/settings">Settings</a> and point it at the JWKS
+     (<span class="mono"><%= h(config.base_url) %>/.well-known/jwks.json</span>).</p>
+
+  <h2>Resetting state</h2>
+  <p>Identities and settings are plain JSON under the config dir. Delete
+     <span class="mono">config.json</span> / <span class="mono">settings.json</span> to start fresh.</p>
+</article>

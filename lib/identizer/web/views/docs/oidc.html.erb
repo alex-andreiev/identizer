@@ -1,0 +1,27 @@
+<p class="muted"><a href="<%= prefix %>/docs">&larr; Docs</a></p>
+<article>
+  <h1>OIDC integration</h1>
+  <p class="lead">Identizer exposes a standard OpenID Connect authorization-code flow with discovery and JWKS.</p>
+
+  <h2>Endpoints</h2>
+  <pre>Issuer        <%= h(config.base_url) %>
+Authorize     <%= h(config.base_url) %>/v1/authorize
+Token         <%= h(config.base_url) %>/v1/token
+Discovery     <%= h(config.base_url) %>/.well-known/openid-configuration
+JWKS          <%= h(config.base_url) %>/.well-known/jwks.json</pre>
+
+  <h2>Token signing</h2>
+  <p>Default is <strong>HS256</strong> (a shared key) — simplest when your client doesn't verify
+     signatures. Switch to <strong>RS256</strong> in <a href="<%= prefix %>/settings">Settings</a> to have
+     id_tokens signed with an RSA key and verifiable against the published JWKS.</p>
+
+  <h2>Claims</h2>
+  <p>Directory attributes map to standard claims: <span class="mono">mail→email</span>,
+     <span class="mono">givenName→given_name</span>, <span class="mono">sn→family_name</span>,
+     <span class="mono">cn→name</span>, <span class="mono">memberOf→groups</span>. The entry's DN is the
+     <span class="mono">sub</span>.</p>
+
+  <h2>Mounting in Rails (dev only)</h2>
+  <pre>mount Identizer::App.new =&gt; "/idp" if Rails.env.development?</pre>
+  <p>Internal links honour the mount path, so the dashboard works under <span class="mono">/idp</span>.</p>
+</article>

@@ -2,22 +2,26 @@
 
 module Identizer
   # The Rack application. Mount it in a test harness or run it standalone via
-  # Identizer::Server. Two surfaces are dispatched: the AWS Cognito management
-  # API (requests carrying x-amz-target) and the runtime IdP endpoints.
+  # Identizer::Server. It serves three surfaces: the web admin (Overview /
+  # Directory / Settings / Docs), the runtime IdP endpoints, and the AWS Cognito
+  # management API (requests carrying x-amz-target).
   class App
     include Responses
 
-    Context = Struct.new(:config, :store, :minter, :sessions)
+    Context = Struct.new(:config, :store, :minter, :sessions, :renderer)
 
     def initialize(config = Identizer.configuration)
       @config = config
-      context = Context.new(config, config.identity_store, TokenMinter.new(config), {})
+      context = Context.new(config, config.identity_store, TokenMinter.new(config), {}, Renderer.new)
+      @overview = Handlers::Overview.new(context)
+      @directory = Handlers::Directory.new(context)
+      @settings = Handlers::Settings.new(context)
+      @docs = Handlers::Docs.new(context)
       @login = Handlers::Login.new(context)
       @cognito = Handlers::Cognito.new(context)
       @auth0 = Handlers::Auth0.new(context)
       @oidc = Handlers::Oidc.new(context)
       @saml = Handlers::Saml.new(context)
-      @dashboard = Handlers::Dashboard.new(context)
     end
 
     def call(env)
@@ -36,31 +40,38 @@ module Identizer
     private
 
     def route(request)
+      admin(request) || idp(request) || not_found("No route for #{request.request_method} #{request.path_info}")
+    end
+
+    # Web admin surface.
+    def admin(request)
       case [request.request_method, request.path_info]
-      in ["GET", "/"]
-        @dashboard.index(request)
-      in ["POST", "/config"]
-        @dashboard.save(request)
-      in ["GET", "/metadata"]
-        @saml.metadata(request)
-      in ["GET", "/login" | "/authorize" | "/v1/authorize"]
-        @login.form(request)
-      in ["GET", "/__select"]
-        @login.select(request)
-      in ["POST", "/oauth2/token"]
-        @cognito.token(request)
-      in ["POST", "/oauth/token"]
-        @auth0.token(request)
-      in ["POST", "/v1/token"]
-        @oidc.token(request)
-      in ["GET", "/userinfo"]
-        @auth0.userinfo(request)
-      in ["GET", "/.well-known/openid-configuration"]
-        @oidc.discovery
-      in ["GET", "/jwks" | "/.well-known/jwks.json"]
-        @oidc.jwks
-      else
-        not_found("No route for #{request.request_method} #{request.path_info}")
+      in ["GET", "/"] then @overview.index(request)
+      in ["GET", "/directory"] then @directory.index(request)
+      in ["POST", "/directory"] then @directory.create(request)
+      in ["POST", "/directory/delete"] then @directory.destroy(request)
+      in ["GET", "/settings"] then @settings.show(request)
+      in ["POST", "/settings"] then @settings.update(request)
+      in ["GET", "/docs"] then @docs.index(request)
+      in ["GET", String => path] if path.start_with?("/docs/")
+        @docs.show(request, path.delete_prefix("/docs/"))
+      else nil
+      end
+    end
+
+    # Runtime IdP + protocol surface.
+    def idp(request)
+      case [request.request_method, request.path_info]
+      in ["GET", "/metadata"] then @saml.metadata(request)
+      in ["GET", "/login" | "/authorize" | "/v1/authorize"] then @login.form(request)
+      in ["GET", "/__select"] then @login.select(request)
+      in ["POST", "/oauth2/token"] then @cognito.token(request)
+      in ["POST", "/oauth/token"] then @auth0.token(request)
+      in ["POST", "/v1/token"] then @oidc.token(request)
+      in ["GET", "/userinfo"] then @auth0.userinfo(request)
+      in ["GET", "/.well-known/openid-configuration"] then @oidc.discovery
+      in ["GET", "/jwks" | "/.well-known/jwks.json"] then @oidc.jwks
+      else nil
       end
     end
   end

@@ -1,0 +1,64 @@
+<% editing = !entry.mail.to_s.empty? %>
+<h1>Directory</h1>
+<p class="lead">An LDAP-flavoured user directory. Entries are projected onto OIDC claims at login
+   (<span class="mono">givenName→given_name</span>, <span class="mono">sn→family_name</span>,
+   <span class="mono">memberOf→groups</span>). Base DN <span class="mono"><%= h(base_dn) %></span>.</p>
+
+<div class="card">
+  <table>
+    <thead>
+      <tr><th>DN</th><th>mail</th><th>cn</th><th>groups</th><th></th></tr>
+    </thead>
+    <tbody>
+      <% if entries.empty? %>
+        <tr><td colspan="5" class="muted">No entries yet — add one below.</td></tr>
+      <% end %>
+      <% entries.each do |item| %>
+        <tr>
+          <td class="mono"><%= h(item.dn) %></td>
+          <td class="mono"><%= h(item.mail) %></td>
+          <td><%= h(item["cn"]) %></td>
+          <td><% item.groups.each do |group| %><span class="tag"><%= h(group) %></span><% end %></td>
+          <td>
+            <div class="actions">
+              <a class="btn" href="<%= prefix %>/directory?edit=<%= h(item.mail) %>">Edit</a>
+              <form method="post" action="<%= prefix %>/directory/delete"
+                    onsubmit="return confirm('Delete <%= h(item.mail) %>?')">
+                <input type="hidden" name="mail" value="<%= h(item.mail) %>">
+                <button class="danger" type="submit">Delete</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<h2><%= editing ? "Edit entry" : "Add entry" %></h2>
+<form class="card" method="post" action="<%= prefix %>/directory">
+  <div class="row">
+    <div><label>mail (login email)</label>
+      <input type="email" name="mail" required value="<%= h(editing ? entry.mail : "") %>"></div>
+    <div><label>uid</label>
+      <input type="text" name="uid" placeholder="auto from mail" value="<%= h(editing ? entry["uid"] : "") %>"></div>
+  </div>
+  <div class="row">
+    <div><label>givenName</label>
+      <input type="text" name="givenName" value="<%= h(editing ? entry["givenName"] : "") %>"></div>
+    <div><label>sn (surname)</label>
+      <input type="text" name="sn" value="<%= h(editing ? entry["sn"] : "") %>"></div>
+  </div>
+  <div class="row">
+    <div><label>cn (common name)</label>
+      <input type="text" name="cn" placeholder="auto from name" value="<%= h(editing ? entry["cn"] : "") %>"></div>
+    <div><label>ou (org unit)</label>
+      <input type="text" name="ou" placeholder="people" value="<%= h(editing ? entry["ou"] : "") %>"></div>
+  </div>
+  <label>memberOf / groups (one per line)</label>
+  <textarea name="memberOf"><%= h(editing ? entry.groups.join("\n") : "") %></textarea>
+  <p>
+    <button class="primary" type="submit"><%= editing ? "Save entry" : "Add entry" %></button>
+    <% if editing %><a class="btn" href="<%= prefix %>/directory">Cancel</a><% end %>
+  </p>
+</form>

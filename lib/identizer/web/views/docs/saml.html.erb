@@ -1,0 +1,20 @@
+<p class="muted"><a href="<%= prefix %>/docs">&larr; Docs</a></p>
+<article>
+  <h1>SAML</h1>
+  <p class="lead">Identizer serves SAML IdP metadata so a SAML provider can be wired up end to end —
+     typically brokered through Cognito.</p>
+
+  <h2>Metadata</h2>
+  <pre>Metadata URL   <%= h(config.base_url) %>/metadata</pre>
+  <p>Paste this as the provider's <em>Metadata URL</em>, or download it from the Overview to test a
+     <em>Metadata File</em> upload.</p>
+
+  <h2>Important caveat</h2>
+  <p>SAML support is currently <strong>cosmetic</strong>: the metadata is static and assertions are
+     <em>not</em> cryptographically signed or verified. It exists so the wiring and the brokered login flow
+     can be exercised locally — not to validate real SAML signature handling.</p>
+
+  <h2>Roadmap</h2>
+  <p>A real signed-assertion SAML IdP (and an optional LDAP listener) are planned as additional protocol
+     handlers alongside the existing OIDC / OAuth2 / Cognito surfaces.</p>
+</article>

@@ -1,0 +1,22 @@
+<p class="muted"><a href="<%= prefix %>/docs">&larr; Docs</a></p>
+<article>
+  <h1>AWS Cognito broker</h1>
+  <p class="lead">Identizer emulates the two Cognito surfaces an app's SSO integration depends on, so you can
+     configure providers and log in without a real user pool.</p>
+
+  <h2>1. Management API (provider-save time)</h2>
+  <p>Point the AWS SDK at Identizer and the management calls (<span class="mono">CreateUserPoolClient</span>,
+     <span class="mono">CreateIdentityProvider</span>, …) are stubbed:</p>
+  <pre>COGNITO_ENDPOINT=<%= h(config.base_url) %></pre>
+  <p>Your "Add provider" UI now succeeds offline, returning fake client ids/secrets.</p>
+
+  <h2>2. Hosted UI (login time)</h2>
+  <pre>Login     <%= h(config.base_url) %>/login
+Token     <%= h(config.base_url) %>/oauth2/token</pre>
+  <p>Set your Cognito hosted-UI domain to <span class="mono"><%= h(config.base_url) %></span>. The token
+     endpoint returns an <span class="mono">id_token</span> for the signed-in directory entry.</p>
+
+  <h2>Trust the TLS cert</h2>
+  <p>The AWS SDK makes server-to-server calls, so it must trust Identizer's certificate. See
+     <a href="<%= prefix %>/docs/tls">TLS &amp; mkcert</a>.</p>
+</article>

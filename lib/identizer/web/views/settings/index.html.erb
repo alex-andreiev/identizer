@@ -1,0 +1,28 @@
+<h1>Settings</h1>
+<p class="lead">Runtime settings. Changes apply immediately and are persisted to
+   <span class="mono">settings.json</span> under the config dir.</p>
+
+<form class="card" method="post" action="<%= prefix %>/settings">
+  <label>Shared sign-in password</label>
+  <input type="text" name="shared_password" value="<%= h(config.shared_password) %>">
+  <p class="muted">Type this on the login form to succeed; anything else exercises the provider's error path.</p>
+
+  <label>Token signing</label>
+  <select name="signing">
+    <option value="hs256" <%= "selected" unless config.rs256? %>>HS256 — shared key (simplest; clients don't verify)</option>
+    <option value="rs256" <%= "selected" if config.rs256? %>>RS256 — RSA + published JWKS (for clients that verify)</option>
+  </select>
+
+  <p><button class="primary" type="submit">Save settings</button></p>
+</form>
+
+<div class="card">
+  <h2 style="margin-top:0;border:0;padding:0">Boot-time (read-only)</h2>
+  <table>
+    <tr><th>Listen</th><td class="mono"><%= h(config.host) %>:<%= config.port %></td></tr>
+    <tr><th>Base URL</th><td class="mono"><%= h(config.base_url) %></td></tr>
+    <tr><th>Config dir</th><td class="mono"><%= h(config.config_dir) %></td></tr>
+    <tr><th>LDAP base DN</th><td class="mono"><%= h(config.ldap_base_dn) %></td></tr>
+  </table>
+  <p class="muted">These are set via CLI flags / env at boot.</p>
+</div>

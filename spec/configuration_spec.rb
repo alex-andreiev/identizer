@@ -14,9 +14,13 @@ RSpec.describe Identizer::Configuration do
     expect(config.issuer).to eq(config.base_url)
   end
 
-  it "coerces seed_identities into Identity objects" do
+  it "coerces seed_identities into DirectoryEntry objects" do
     config.seed_identities = [{ email: "a@b.com" }, "c@d.com"]
-    expect(config.seed_identities).to all(be_a(Identizer::Identity))
+    expect(config.seed_identities).to all(be_a(Identizer::DirectoryEntry))
+  end
+
+  it "exposes the LDAP base DN" do
+    expect(config.ldap_base_dn).to eq("dc=identizer,dc=local")
   end
 
   it "builds a default ConfigStore seeded from seed_identities" do

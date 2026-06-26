@@ -1,0 +1,27 @@
+<p class="muted"><a href="<%= prefix %>/docs">&larr; Docs</a></p>
+<article>
+  <h1>Getting started</h1>
+  <p class="lead">Identizer is a local identity provider. Point your app's SSO/OIDC config at it
+     instead of a real tenant, sign in as a directory entry, and develop the whole flow offline.</p>
+
+  <h2>1. Run it</h2>
+  <pre>bundle exec identizer --port 9999
+# dashboard: <%= h(config.base_url) %>/</pre>
+
+  <h2>2. Add users</h2>
+  <p>Open the <a href="<%= prefix %>/directory">Directory</a> and add an entry (at minimum a
+     <span class="mono">mail</span>). The password for every entry is the shared password from
+     <a href="<%= prefix %>/settings">Settings</a> (default <code>password</code>).</p>
+
+  <h2>3. Point your app at it</h2>
+  <p>Use the values from the <a href="<%= prefix %>/">Overview</a> cheatsheet for your protocol —
+     issuer/authorize/token URLs all live under <span class="mono"><%= h(config.base_url) %></span>.</p>
+
+  <h2>4. Sign in</h2>
+  <p>Trigger your app's login. Identizer shows a sign-in form; enter a configured email + the shared
+     password. A wrong password or unknown email exercises the provider's error path.</p>
+
+  <h2>Mounted vs standalone</h2>
+  <p>Run standalone via the CLI, or mount the Rack app inside your own stack —
+     <span class="mono">mount Identizer::App.new =&gt; "/idp"</span>. See <a href="<%= prefix %>/docs/oidc">OIDC</a>.</p>
+</article>

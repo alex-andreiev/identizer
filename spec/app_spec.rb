@@ -18,7 +18,7 @@ RSpec.describe Identizer::App do
     Identizer::Configuration.new.tap do |c|
       c.config_dir = @dir
       c.seed_identities = [
-        { email: "alice@example.com", claims: { given_name: "Alice", family_name: "Doe" } }
+        { mail: "alice@example.com", givenName: "Alice", sn: "Doe" }
       ]
     end
   end
@@ -30,18 +30,50 @@ RSpec.describe Identizer::App do
     Rack::Utils.parse_query(URI(last_response.headers["location"]).query)
   end
 
-  describe "dashboard" do
-    it "renders the configuration page" do
+  describe "web admin" do
+    it "renders the overview" do
       get "/"
       expect(last_response.status).to eq(200)
       expect(last_response.content_type).to start_with("text/html")
-      expect(last_response.body).to include("Identizer", "alice@example.com")
+      expect(last_response.body).to include("Identizer", "Overview", config.base_url)
     end
 
-    it "saves edited identities and redirects" do
-      post "/config", emails: "new@example.com\n  \nother@example.com"
+    it "lists directory entries" do
+      get "/directory"
+      expect(last_response.status).to eq(200)
+      expect(last_response.body).to include("alice@example.com", "uid=alice,ou=people")
+    end
+
+    it "creates a directory entry from LDAP attributes" do
+      post "/directory", mail: "bob@example.com", givenName: "Bob", sn: "Jones", memberOf: "admins\nstaff"
       expect(last_response.status).to eq(302)
-      expect(config.identity_store.emails).to eq(["new@example.com", "other@example.com"])
+      entry = config.identity_store.entries.find { |e| e.mail == "bob@example.com" }
+      expect(entry.groups).to eq(%w[admins staff])
+      expect(entry.to_identity.to_h).to include("given_name" => "Bob", "family_name" => "Jones")
+    end
+
+    it "deletes a directory entry" do
+      post "/directory/delete", mail: "alice@example.com"
+      expect(last_response.status).to eq(302)
+      expect(config.identity_store.emails).to eq([])
+    end
+
+    it "edits settings and persists them" do
+      post "/settings", shared_password: "hunter2", signing: "rs256"
+      expect(last_response.status).to eq(302)
+      expect(config.shared_password).to eq("hunter2")
+      expect(config.signing).to eq(:rs256)
+      expect(JSON.parse(File.read(config.settings_path))).to include("shared_password" => "hunter2")
+    end
+
+    it "serves the docs index and a doc page" do
+      get "/docs"
+      expect(last_response.body).to include("Getting started")
+      get "/docs/oidc"
+      expect(last_response.status).to eq(200)
+      expect(last_response.body).to include("OIDC")
+      get "/docs/nope"
+      expect(last_response.status).to eq(404)
     end
   end
 
