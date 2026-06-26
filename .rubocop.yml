@@ -1,0 +1,85 @@
+plugins:
+  - rubocop-rspec
+
+AllCops:
+  TargetRubyVersion: 3.2
+  NewCops: enable
+  SuggestExtensions: false
+
+# Local dev tool with HTML/XML heredocs and a banner — long lines and methods
+# are expected in the view-ish handlers.
+Layout/LineLength:
+  Max: 120
+
+# Keep dev dependencies declared in the gemspec.
+Gemspec/DevelopmentDependencies:
+  Enabled: false
+
+Metrics/MethodLength:
+  Max: 25
+  Exclude:
+    - "lib/identizer/handlers/**/*"
+    - "lib/identizer/app.rb"
+    - "lib/identizer/cli.rb"
+    - "lib/identizer/server.rb"
+    - "lib/identizer/tls.rb"
+    - "lib/identizer/configuration.rb"
+
+# The router and the option parser are flat dispatch tables — long but trivial.
+Metrics/AbcSize:
+  Exclude:
+    - "lib/identizer/handlers/**/*"
+    - "lib/identizer/app.rb"
+    - "lib/identizer/cli.rb"
+    - "lib/identizer/server.rb"
+    - "lib/identizer/tls.rb"
+
+Metrics/CyclomaticComplexity:
+  Exclude:
+    - "lib/identizer/app.rb"
+
+Metrics/PerceivedComplexity:
+  Exclude:
+    - "lib/identizer/app.rb"
+
+Metrics/ClassLength:
+  Exclude:
+    - "lib/identizer/handlers/**/*"
+
+Metrics/BlockLength:
+  Exclude:
+    - "spec/**/*"
+    - "*.gemspec"
+    - "lib/identizer/cli.rb"
+
+Style/Documentation:
+  Enabled: false
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+
+# Specs read better with expressive block and example names.
+RSpec/ExampleLength:
+  Enabled: false
+
+RSpec/MultipleExpectations:
+  Enabled: false
+
+RSpec/InstanceVariable:
+  Enabled: false
+
+RSpec/MultipleMemoizedHelpers:
+  Enabled: false
+
+# Flat spec/ layout and a couple of behaviour-described (non-class) specs.
+RSpec/SpecFilePathFormat:
+  Enabled: false
+
+RSpec/DescribeClass:
+  Enabled: false
+
+RSpec/NamedSubject:
+  Enabled: false
