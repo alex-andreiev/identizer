@@ -21,7 +21,8 @@ module Identizer
 
     def generate_self_signed(config)
       key = OpenSSL::PKey::RSA.new(2048)
-      name = OpenSSL::X509::Name.parse("/CN=localhost")
+      host = config.url_host
+      name = OpenSSL::X509::Name.parse("/CN=#{host}")
 
       cert = OpenSSL::X509::Certificate.new
       cert.version = 2
@@ -36,7 +37,7 @@ module Identizer
       factory.subject_certificate = cert
       factory.issuer_certificate = cert
       cert.add_extension(factory.create_extension("basicConstraints", "CA:TRUE", true))
-      cert.add_extension(factory.create_extension("subjectAltName", "DNS:localhost,IP:127.0.0.1", false))
+      cert.add_extension(factory.create_extension("subjectAltName", subject_alt_names(host), false))
       cert.sign(key, OpenSSL::Digest.new("SHA256"))
 
       FileUtils.mkdir_p(config.config_dir)
@@ -45,6 +46,14 @@ module Identizer
       File.write(File.join(config.config_dir, "key.pem"), key.to_pem)
 
       [cert, key, cert_path]
+    end
+
+    # Always covers localhost/127.0.0.1, plus a custom advertised host so HTTPS
+    # works when the app reaches Identizer by that name (via /etc/hosts).
+    def subject_alt_names(host)
+      names = ["DNS:localhost", "IP:127.0.0.1"]
+      names << "DNS:#{host}" unless host.nil? || host.empty? || host == "localhost"
+      names.join(",")
     end
   end
 end

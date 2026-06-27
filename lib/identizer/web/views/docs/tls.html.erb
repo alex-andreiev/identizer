@@ -10,6 +10,16 @@
      app's server-to-server calls (token / userinfo / AWS SDK) trust it:</p>
   <pre>export SSL_CERT_FILE=…/cert.pem</pre>
 
+  <h2>Custom domain</h2>
+  <p>Want Identizer to look like a real provider host (e.g. <span class="mono">myco.okta.local</span>)? Run it
+     with a domain and tell your machine that name points at localhost:</p>
+  <pre>identizer --domain myco.okta.local
+# /etc/hosts
+127.0.0.1   myco.okta.local</pre>
+  <p>The generated self-signed certificate automatically includes the custom domain in its SAN, so HTTPS to
+     <span class="mono">https://myco.okta.local:9999</span> validates the hostname. (If you pass your own
+     <span class="mono">--tls-cert</span>, make sure that cert covers the domain.)</p>
+
   <h2>Recommended: mkcert (locally trusted)</h2>
   <pre>mkcert -install
 mkcert localhost 127.0.0.1

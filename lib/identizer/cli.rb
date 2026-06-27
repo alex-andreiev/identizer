@@ -61,6 +61,9 @@ module Identizer
         opts.on("--url-host HOST", "Hostname used in advertised URLs (default localhost)") do |value|
           config.url_host = value
         end
+        opts.on("--domain HOST", "Serve under a custom domain (add it to /etc/hosts -> 127.0.0.1)") do |value|
+          config.url_host = value
+        end
         opts.on("--config-dir DIR", "Where identities + certs are stored") { |value| config.config_dir = value }
         opts.on("--tls-cert PATH", "TLS certificate (PEM)") { |value| config.tls_cert_path = value }
         opts.on("--tls-key PATH", "TLS private key (PEM)") { |value| config.tls_key_path = value }

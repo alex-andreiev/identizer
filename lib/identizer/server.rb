@@ -91,6 +91,7 @@ module Identizer
          Dashboard   #{base}/
                      (manage users & settings, copy provider values)
          Sign in     any directory user · password: "#{@config.shared_password}"
+        #{hosts_hint}
 
          Point your app's SSO config at:
            OIDC      issuer #{base}  (discovery at /.well-known/openid-configuration)
@@ -105,6 +106,13 @@ module Identizer
               (or use mkcert + --tls-cert/--tls-key). Press Ctrl-C to stop.
         ────────────────────────────────────────────────────────────
       BANNER
+    end
+
+    def hosts_hint
+      return "" if @config.url_host == "localhost"
+
+      " Custom domain → add to /etc/hosts:  127.0.0.1  #{@config.url_host}\n " \
+        "(the self-signed cert already covers it)\n"
     end
 
     def ldap_banner_line

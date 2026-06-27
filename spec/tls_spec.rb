@@ -27,6 +27,12 @@ RSpec.describe Identizer::TLS do
     expect(File.exist?(File.join(@dir, "key.pem"))).to be(true)
   end
 
+  it "covers a custom url_host in the certificate SAN" do
+    cert, = described_class.resolve(config(url_host: "myco.okta.local"))
+    san = cert.extensions.find { |ext| ext.oid == "subjectAltName" }.to_s
+    expect(san).to include("myco.okta.local", "localhost", "127.0.0.1")
+  end
+
   it "loads a provided cert/key pair instead of generating one" do
     _, _, cert_path = described_class.generate_self_signed(config)
     key_path = File.join(@dir, "key.pem")

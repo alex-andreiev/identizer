@@ -25,6 +25,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Web admin UI: Overview, Directory CRUD, Settings (persisted), bundled Docs.
 - Standalone HTTPS server + `identizer` CLI, and a mountable, `SCRIPT_NAME`-aware
   Rack app.
+- A seeded demo user on first run (`--no-demo` to skip) and a quick-start banner.
+- Okta-style `/oauth2/v1/*` OAuth2 paths for fixed-path clients (e.g.
+  `omniauth-okta`); the OIDC access token resolves at `/userinfo`.
+- SAML attributes default to the Microsoft/WS-Fed claim URIs (configurable via
+  `saml_attribute_names`), matching how real IdPs name them.
+- Custom domain via `--domain` (cert SAN covers it; add it to `/etc/hosts`).
 - Optional LDAP listener (`--ldap-port`): simple bind authentication and subtree
   search (equality / presence / substring / `&` `|` `!` filters) over the same
   directory, projecting entries to standard LDAP attributes.
