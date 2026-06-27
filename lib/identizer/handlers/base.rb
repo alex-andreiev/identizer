@@ -29,7 +29,7 @@ module Identizer
       end
 
       def consume(code)
-        sessions.delete(code)
+        sessions.take(code)
       end
 
       # Consume a one-time authorization code and enforce PKCE when a challenge

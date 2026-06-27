@@ -25,7 +25,14 @@ module Identizer
       @ldaps_port = optional_int_env("IDENTIZER_LDAPS_PORT") # nil = LDAPS listener off
       @seed_identities = []
       @clients = [] # optional OAuth client registry: [{ client_id:, client_secret:, redirect_uris: }]
+      @saml_allowed_acs = [] # optional allowlist of SAML ACS URLs ([] = allow any, dev default)
+      @code_ttl = 600
+      @access_token_ttl = 3600
+      @refresh_token_ttl = 86_400
     end
+
+    # Grant lifetimes (seconds), enforced by the GrantStore.
+    attr_accessor :code_ttl, :access_token_ttl, :refresh_token_ttl, :saml_allowed_acs
 
     # Registered OAuth clients. Empty = accept any client_id (lenient dev default).
     attr_accessor :clients
@@ -85,7 +92,24 @@ module Identizer
 
     # Cheatsheet rendered on the dashboard. Override to match your app's stack.
     def providers
-      @providers || default_providers
+      @providers || Providers.default(base_url)
+    end
+
+    # Open-redirect guard. Lenient (true) until clients are registered; then the
+    # redirect_uri must match one registered for that client.
+    def redirect_uri_allowed?(client_id, redirect_uri)
+      return true if clients.empty?
+
+      client = clients.find { |entry| entry[:client_id] == client_id }
+      return false unless client
+
+      allowed = Array(client[:redirect_uris])
+      allowed.empty? || allowed.include?(redirect_uri)
+    end
+
+    # SAML ACS guard. Lenient until an allowlist is configured.
+    def acs_allowed?(acs)
+      saml_allowed_acs.empty? || saml_allowed_acs.include?(acs)
     end
 
     def settings_path
@@ -109,51 +133,6 @@ module Identizer
     end
 
     private
-
-    def default_providers
-      [
-        {
-          title: "OpenID Connect",
-          note: nil,
-          fields: [
-            ["Issuer URL", base_url],
-            ["Authorization endpoint", "#{base_url}/v1/authorize"],
-            ["Token endpoint", "#{base_url}/v1/token"],
-            ["Discovery", "#{base_url}/.well-known/openid-configuration"],
-            ["Client ID", "dev-client"],
-            ["Client secret", "dev-secret"]
-          ]
-        },
-        {
-          title: "OAuth2 / Auth0-style",
-          note: "Exchange the code at /oauth/token, then fetch the profile at /userinfo.",
-          fields: [
-            ["Authorization endpoint", "#{base_url}/authorize"],
-            ["Token endpoint", "#{base_url}/oauth/token"],
-            ["Userinfo endpoint", "#{base_url}/userinfo"],
-            ["Domain (bare, no scheme)", base_url.sub(%r{\Ahttps?://}, "")]
-          ]
-        },
-        {
-          title: "SAML 2.0",
-          note: "A real signed IdP. Point your SP at the SSO endpoint and metadata below.",
-          fields: [
-            ["Metadata URL", "#{base_url}/metadata"],
-            ["SSO URL (Redirect/POST)", "#{base_url}/saml/sso"],
-            ["NameID", "emailAddress"]
-          ]
-        },
-        {
-          title: "AWS Cognito broker",
-          note: "Point COGNITO_ENDPOINT at this server so the management API is stubbed.",
-          fields: [
-            ["Endpoint", base_url],
-            ["Hosted UI login", "#{base_url}/login"],
-            ["Token endpoint", "#{base_url}/oauth2/token"]
-          ]
-        }
-      ]
-    end
 
     def env_presence(*keys)
       keys.each do |key|

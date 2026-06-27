@@ -17,14 +17,12 @@ module Identizer
 
         # Mint a distinct access_token that /userinfo resolves to the profile.
         access_token = SecureRandom.hex(20)
-        access_tokens[access_token] = authorization
-        json(200, { access_token: access_token, token_type: "Bearer" })
+        access_tokens.put(access_token, authorization, ttl: config.access_token_ttl)
+        json(200, { access_token: access_token, token_type: "Bearer", expires_in: config.access_token_ttl })
       end
 
       def userinfo(request)
-        token = bearer(request)
-        # Resolve either an OIDC/Okta access_token or the Auth0 code-as-token.
-        authorization = access_tokens[token] || sessions[token]
+        authorization = access_tokens.get(bearer(request))
         return json(401, { error: "invalid_token" }) if authorization.nil?
 
         json(200, authorization.identity.to_h)

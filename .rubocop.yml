@@ -24,6 +24,7 @@ Metrics/MethodLength:
     - "lib/identizer/server.rb"
     - "lib/identizer/tls.rb"
     - "lib/identizer/configuration.rb"
+    - "lib/identizer/providers.rb"
 
 # The router and the option parser are flat dispatch tables — long but trivial.
 Metrics/AbcSize:
@@ -46,6 +47,7 @@ Metrics/CyclomaticComplexity:
   Exclude:
     - "lib/identizer/app.rb"
     - "lib/identizer/ldap/filter.rb"
+    - "lib/identizer/handlers/saml.rb"
 
 # `dn` is the standard LDAP term; allow it as a parameter name.
 Naming/MethodParameterName:

@@ -90,6 +90,12 @@ RSpec.describe "SAML IdP" do
       post "/saml/finish", email: "alice@example.com", password: "nope", acs: acs
       expect(last_response.body).to include("SAML error")
     end
+
+    it "rejects an ACS that is not on the allowlist" do
+      config.saml_allowed_acs = ["https://trusted.example.com/acs"]
+      get "/saml/sso", acs: "https://evil.example.com/acs"
+      expect(last_response.body).to include("ACS not allowed")
+    end
   end
 
   describe "SP-initiated SSO" do

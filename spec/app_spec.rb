@@ -282,16 +282,45 @@ RSpec.describe Identizer::App do
     before { config.clients = [{ client_id: "web" }] }
 
     it "rejects an unknown client_id" do
-      code = authorize.fetch("code")
+      code = authorize(client_id: "web").fetch("code")
       post "/v1/token", code: code, client_id: "evil"
       expect(last_response.status).to eq(401)
       expect(JSON.parse(last_response.body)).to include("error" => "invalid_client")
     end
 
     it "accepts a registered client_id" do
-      code = authorize.fetch("code")
+      code = authorize(client_id: "web").fetch("code")
       post "/v1/token", code: code, client_id: "web"
       expect(last_response.status).to eq(200)
+    end
+
+    it "blocks a redirect_uri not registered for the client (no open redirect)" do
+      config.clients = [{ client_id: "web", redirect_uris: ["https://app.test/cb"] }]
+      get "/__select", redirect_uri: "https://evil.test/grab", state: "s",
+                       email: "alice@example.com", password: "password", client_id: "web"
+      expect(last_response.status).to eq(200)
+      expect(last_response.body).to include("Sign-in blocked")
+      expect(last_response.headers["location"]).to be_nil
+    end
+  end
+
+  describe "token expiry" do
+    it "rejects an expired access_token at userinfo" do
+      config.access_token_ttl = 0
+      code = authorize.fetch("code")
+      post "/oauth/token", code: code
+      token = JSON.parse(last_response.body).fetch("access_token")
+
+      header "Authorization", "Bearer #{token}"
+      get "/userinfo"
+      expect(last_response.status).to eq(401)
+    end
+
+    it "rejects an expired authorization code at the token endpoint" do
+      config.code_ttl = 0
+      code = authorize.fetch("code")
+      post "/v1/token", code: code
+      expect(last_response.status).to eq(400)
     end
   end
 

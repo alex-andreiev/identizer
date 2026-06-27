@@ -14,6 +14,7 @@ module Identizer
         super
         @clients = {}
         @connections = {}
+        @mutex = Mutex.new # the WEBrick server is multithreaded
       end
 
       def create_client(request)
@@ -21,42 +22,44 @@ module Identizer
           "client_id" => SecureRandom.alphanumeric(32),
           "client_secret" => SecureRandom.alphanumeric(64)
         )
-        @clients[client["client_id"]] = client
+        @mutex.synchronize { @clients[client["client_id"]] = client }
         json(201, client)
       end
 
       def update_client(request, id)
-        @clients[id] = (@clients[id] || { "client_id" => id }).merge(parse_json(request))
-        json(200, @clients[id])
+        body = parse_json(request)
+        updated = @mutex.synchronize { @clients[id] = (@clients[id] || { "client_id" => id }).merge(body) }
+        json(200, updated)
       end
 
       def delete_client(_request, id)
-        @clients.delete(id)
+        @mutex.synchronize { @clients.delete(id) }
         no_content
       end
 
       def list_clients(_request)
-        json(200, @clients.values)
+        json(200, @mutex.synchronize { @clients.values })
       end
 
       def create_connection(request)
         connection = parse_json(request).merge("id" => "con_#{SecureRandom.alphanumeric(24)}")
-        @connections[connection["id"]] = connection
+        @mutex.synchronize { @connections[connection["id"]] = connection }
         json(201, connection)
       end
 
       def update_connection(request, id)
-        @connections[id] = (@connections[id] || { "id" => id }).merge(parse_json(request))
-        json(200, @connections[id])
+        body = parse_json(request)
+        updated = @mutex.synchronize { @connections[id] = (@connections[id] || { "id" => id }).merge(body) }
+        json(200, updated)
       end
 
       def delete_connection(_request, id)
-        @connections.delete(id)
+        @mutex.synchronize { @connections.delete(id) }
         no_content
       end
 
       def list_connections(_request)
-        json(200, @connections.values)
+        json(200, @mutex.synchronize { @connections.values })
       end
     end
   end

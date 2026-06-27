@@ -12,7 +12,8 @@ module Identizer
 
     def initialize(config = Identizer.configuration)
       @config = config
-      context = Context.new(config, config.identity_store, TokenMinter.new(config), {}, {}, {}, Renderer.new)
+      context = Context.new(config, config.identity_store, TokenMinter.new(config),
+                            GrantStore.new, GrantStore.new, GrantStore.new, Renderer.new)
       @overview = Handlers::Overview.new(context)
       @directory = Handlers::Directory.new(context)
       @settings = Handlers::Settings.new(context)

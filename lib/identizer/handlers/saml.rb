@@ -11,6 +11,7 @@ module Identizer
     # required lazily so it is only loaded when actually producing a Response.
     class Saml < Base
       EMAIL_FORMAT = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+      MAX_AUTHN_REQUEST = 100_000 # reject oversized SAMLRequest (deflate-bomb guard)
 
       def metadata(request)
         headers = {}
@@ -22,9 +23,9 @@ module Identizer
       def sso(request)
         context = authn_context(request)
         return json(400, { error: "no AssertionConsumerServiceURL" }) if context[:acs].to_s.empty?
+        return html(error_page("ACS not allowed: #{context[:acs]}")) unless config.acs_allowed?(context[:acs])
 
-        page = login_form(request.script_name, context)
-        html(page)
+        html(login_form(request.script_name, context))
       end
 
       # Validate the login and POST a signed SAML Response back to the SP.
@@ -34,6 +35,8 @@ module Identizer
         return html(error_page("Unknown user: #{email}")) unless store.emails.include?(email)
 
         acs = request.params["acs"].to_s
+        return html(error_page("ACS not allowed: #{acs}")) unless config.acs_allowed?(acs)
+
         response = build_response(store.identity_for(email), acs, request)
         html(auto_post(acs, response, request.params["relay_state"].to_s))
       end
@@ -63,6 +66,8 @@ module Identizer
       end
 
       def parse_authn_request(value, method)
+        return {} if value.bytesize > MAX_AUTHN_REQUEST
+
         raw = Base64.decode64(value)
         xml = method == "GET" ? inflate(raw) : raw
         document = REXML::Document.new(xml)
@@ -74,7 +79,10 @@ module Identizer
       end
 
       def inflate(raw)
-        Zlib::Inflate.new(-Zlib::MAX_WBITS).inflate(raw)
+        out = Zlib::Inflate.new(-Zlib::MAX_WBITS).inflate(raw)
+        raise "SAMLRequest too large" if out.bytesize > 5_000_000
+
+        out
       rescue StandardError
         raw
       end

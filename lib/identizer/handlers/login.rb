@@ -30,8 +30,12 @@ module Identizer
           return error_redirect(redirect_uri, state, "access_denied", "Unknown user: #{email}")
         end
 
+        unless config.redirect_uri_allowed?(request.params["client_id"], redirect_uri)
+          return html(invalid_redirect_page(redirect_uri))
+        end
+
         code = SecureRandom.hex(20)
-        sessions[code] = authorization_for(request, email)
+        sessions.put(code, authorization_for(request, email), ttl: config.code_ttl)
         auth_redirect(redirect_uri, state, code: code)
       end
 
@@ -58,6 +62,14 @@ module Identizer
 
       def error_redirect(redirect_uri, state, error, description)
         auth_redirect(redirect_uri, state, error: error, error_description: description)
+      end
+
+      # Never redirect to a rejected redirect_uri (that would be the open redirect
+      # we're preventing) — render an error page instead.
+      def invalid_redirect_page(redirect_uri)
+        "<!doctype html><html><body style=\"font-family:sans-serif;max-width:480px;margin:64px auto\">" \
+          "<h2>Sign-in blocked</h2><p>redirect_uri <code>#{escape_html(redirect_uri)}</code> is not " \
+          "registered for this client.</p></body></html>"
       end
 
       def auth_redirect(redirect_uri, state, params)

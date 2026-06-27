@@ -43,7 +43,7 @@ module Identizer
       end
 
       def refresh(request)
-        authorization = refresh_tokens.delete(request.params["refresh_token"])
+        authorization = refresh_tokens.take(request.params["refresh_token"]) # single-use, rotated
         return json(400, { error: "invalid_grant" }) if authorization.nil?
 
         issue(authorization)
@@ -51,9 +51,9 @@ module Identizer
 
       def issue(authorization)
         refresh_token = SecureRandom.hex(20)
-        refresh_tokens[refresh_token] = authorization
+        refresh_tokens.put(refresh_token, authorization, ttl: config.refresh_token_ttl)
         access_token = SecureRandom.hex(20)
-        access_tokens[access_token] = authorization # so /userinfo can resolve it
+        access_tokens.put(access_token, authorization, ttl: config.access_token_ttl) # /userinfo resolves it
 
         body = {
           access_token: access_token,

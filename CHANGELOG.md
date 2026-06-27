@@ -6,6 +6,16 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Hardening (code-review follow-ups)
+- Tokens/codes now have enforced TTLs via a thread-safe `GrantStore` (codes 10m,
+  access 1h, refresh 24h, all configurable) — expiry is testable and the maps no
+  longer grow unbounded.
+- Optional open-redirect guard: when `clients` are registered, `redirect_uri`
+  must match a registered URI; an optional `saml_allowed_acs` allowlist guards
+  the SAML ACS. Both lenient until configured.
+- SAML `SAMLRequest` size + inflate guards (deflate-bomb protection).
+- Auth0 management registry mutations are mutex-guarded.
+
 ### Security / correctness (code review)
 - Enforce PKCE uniformly across all token endpoints (a code can no longer be
   redeemed at a different endpoint to skip the check).
