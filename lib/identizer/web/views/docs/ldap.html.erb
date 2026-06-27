@@ -28,7 +28,11 @@
   <p>Adds an implicit-TLS listener reusing the same certificate as the HTTPS server (see
      <a href="<%= prefix %>/docs/tls">TLS &amp; mkcert</a>). You can run plain LDAP and LDAPS together.</p>
 
+  <h2>StartTLS</h2>
+  <p>Clients that upgrade a plain LDAP connection with StartTLS are supported on the plain
+     <span class="mono">--ldap-port</span> listener — Identizer acknowledges the extended operation and upgrades
+     the socket to TLS (reusing the same certificate).</p>
+
   <h2>Scope</h2>
-  <p>A development listener (simple bind, no StartTLS extended operation). Not intended for production
-     directories.</p>
+  <p>A development listener (simple bind). Not intended for production directories.</p>
 </article>

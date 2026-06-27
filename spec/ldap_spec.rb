@@ -140,6 +140,29 @@ RSpec.describe Identizer::Ldap::Server do
     end
   end
 
+  describe "StartTLS" do
+    it "upgrades a plain connection to TLS, then binds and searches" do
+      server = described_class.new(config, host: "127.0.0.1", port: port)
+      thread = Thread.new { server.start }
+      wait_until_listening
+
+      ldap = Net::LDAP.new(
+        host: "127.0.0.1", port: port,
+        encryption: { method: :start_tls, tls_options: { verify_mode: OpenSSL::SSL::VERIFY_NONE } }
+      )
+      ldap.auth(alice_dn, "secret")
+
+      expect(ldap.bind).to be(true)
+      entries = ldap.search(base: "dc=identizer,dc=local",
+                            filter: Net::LDAP::Filter.eq("mail", "alice@example.com"),
+                            scope: Net::LDAP::SearchScope_WholeSubtree)
+      expect(Array(entries).map(&:dn)).to eq([alice_dn])
+    ensure
+      server&.stop
+      thread&.join(2)
+    end
+  end
+
   describe "LDAPS (implicit TLS)" do
     it "binds and searches over TLS" do
       server = described_class.new(config, host: "127.0.0.1", port: port, tls: true)

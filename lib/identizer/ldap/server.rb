@@ -11,13 +11,20 @@ module Identizer
       BIND_REQUEST = 0x60
       SEARCH_REQUEST = 0x63
       UNBIND_REQUEST = 0x42
+      EXTENDED_REQUEST = 0x77
 
       # protocolOp application tags (response side).
       BIND_RESPONSE = 1
       SEARCH_ENTRY = 4
       SEARCH_DONE = 5
+      EXTENDED_RESPONSE = 24
 
       PROTOCOL_ERROR = 2
+      STARTTLS_OID = "1.3.6.1.4.1.1466.20037"
+
+      # Net::LDAP's client syntax doesn't map the ExtendedRequest tag, so add it
+      # (as an array) — otherwise read_ber raises on a StartTLS request.
+      SYNTAX = Net::LDAP::AsnSyntax.dup.tap { |syntax| syntax[EXTENDED_REQUEST] = :array }.freeze
 
       def initialize(config, host: nil, port: nil, tls: false)
         @config = config
@@ -64,13 +71,17 @@ module Identizer
       end
 
       def wrap_tls(client)
-        ssl = OpenSSL::SSL::SSLSocket.new(client, @ssl_context)
+        ssl = OpenSSL::SSL::SSLSocket.new(client, ssl_context)
         ssl.sync_close = true
         ssl.accept
         ssl
       rescue OpenSSL::SSL::SSLError, IOError
         client.close
         nil
+      end
+
+      def ssl_context
+        @ssl_context ||= build_ssl_context
       end
 
       def build_ssl_context
@@ -82,26 +93,54 @@ module Identizer
       end
 
       def serve(connection)
-        # Net::BER's read_ber is mixed into IO/StringIO; an SSLSocket needs it added.
-        connection.extend(Net::BER::BERParser) unless connection.respond_to?(:read_ber)
-        while (pdu = connection.read_ber(Net::LDAP::AsnSyntax))
-          message_id = pdu[0]
-          operation = pdu[1]
-          break if dispatch(connection, message_id, operation) == :close
+        readable(connection)
+        while (pdu = connection.read_ber(SYNTAX))
+          case dispatch(connection, pdu[0], pdu[1])
+          when :close then break
+          when :starttls
+            connection = upgrade_to_tls(connection)
+            break if connection.nil?
+          end
         end
       rescue StandardError
         nil
       ensure
-        connection.close unless connection.closed?
+        connection.close if connection && !connection.closed?
+      end
+
+      # Net::BER's read_ber is mixed into IO/StringIO; an SSLSocket needs it added.
+      def readable(connection)
+        connection.extend(Net::BER::BERParser) unless connection.respond_to?(:read_ber)
       end
 
       def dispatch(connection, message_id, operation)
         case operation.ber_identifier
         when BIND_REQUEST then handle_bind(connection, message_id, operation)
         when SEARCH_REQUEST then handle_search(connection, message_id, operation)
+        when EXTENDED_REQUEST then handle_extended(connection, message_id, operation)
         when UNBIND_REQUEST then :close
         else write(connection, message_id, result(PROTOCOL_ERROR, SEARCH_DONE))
         end
+      end
+
+      # StartTLS (RFC 4513): acknowledge, then upgrade the plain socket to TLS.
+      def handle_extended(connection, message_id, operation)
+        if operation[0].to_s == STARTTLS_OID
+          write(connection, message_id, result(Handler::SUCCESS, EXTENDED_RESPONSE))
+          :starttls
+        else
+          write(connection, message_id, result(PROTOCOL_ERROR, EXTENDED_RESPONSE))
+        end
+      end
+
+      def upgrade_to_tls(connection)
+        ssl = OpenSSL::SSL::SSLSocket.new(connection, ssl_context)
+        ssl.sync_close = true
+        ssl.accept
+        readable(ssl)
+        ssl
+      rescue OpenSSL::SSL::SSLError, IOError
+        nil
       end
 
       def handle_bind(connection, message_id, operation)

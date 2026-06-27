@@ -48,6 +48,7 @@ Metrics/CyclomaticComplexity:
   Exclude:
     - "lib/identizer/app.rb"
     - "lib/identizer/ldap/filter.rb"
+    - "lib/identizer/ldap/server.rb"
     - "lib/identizer/handlers/saml.rb"
 
 # `dn` is the standard LDAP term; allow it as a parameter name.
