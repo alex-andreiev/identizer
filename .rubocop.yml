@@ -31,6 +31,7 @@ Metrics/AbcSize:
     - "lib/identizer/handlers/**/*"
     - "lib/identizer/app.rb"
     - "lib/identizer/cli.rb"
+    - "lib/identizer/configuration.rb"
     - "lib/identizer/server.rb"
     - "lib/identizer/tls.rb"
 

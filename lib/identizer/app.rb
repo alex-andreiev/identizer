@@ -8,11 +8,11 @@ module Identizer
   class App
     include Responses
 
-    Context = Struct.new(:config, :store, :minter, :sessions, :renderer)
+    Context = Struct.new(:config, :store, :minter, :sessions, :refresh_tokens, :renderer)
 
     def initialize(config = Identizer.configuration)
       @config = config
-      context = Context.new(config, config.identity_store, TokenMinter.new(config), {}, Renderer.new)
+      context = Context.new(config, config.identity_store, TokenMinter.new(config), {}, {}, Renderer.new)
       @overview = Handlers::Overview.new(context)
       @directory = Handlers::Directory.new(context)
       @settings = Handlers::Settings.new(context)
@@ -68,6 +68,7 @@ module Identizer
       in ["POST", "/oauth2/token"] then @cognito.token(request)
       in ["POST", "/oauth/token"] then @auth0.token(request)
       in ["POST", "/v1/token"] then @oidc.token(request)
+      in ["GET", "/v1/logout"] then @oidc.logout(request)
       in ["GET", "/userinfo"] then @auth0.userinfo(request)
       in ["GET", "/.well-known/openid-configuration"] then @oidc.discovery
       in ["GET", "/jwks" | "/.well-known/jwks.json"] then @oidc.jwks

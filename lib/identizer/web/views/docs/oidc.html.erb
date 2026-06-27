@@ -10,6 +10,16 @@ Token         <%= h(config.base_url) %>/v1/token
 Discovery     <%= h(config.base_url) %>/.well-known/openid-configuration
 JWKS          <%= h(config.base_url) %>/.well-known/jwks.json</pre>
 
+  <h2>Supported features</h2>
+  <ul>
+    <li>Authorization-code grant + <strong>PKCE</strong> (S256 / plain)</li>
+    <li><strong>Refresh tokens</strong> (<span class="mono">grant_type=refresh_token</span>, rotated on use)</li>
+    <li><strong>RP-initiated logout</strong> at <span class="mono"><%= h(config.base_url) %>/v1/logout</span>
+        (<span class="mono">post_logout_redirect_uri</span>)</li>
+    <li><span class="mono">nonce</span> bound into the id_token; <span class="mono">scope</span> echoed back</li>
+    <li>Optional client registry (<span class="mono">config.clients</span>) — lenient when empty</li>
+  </ul>
+
   <h2>Token signing</h2>
   <p>Default is <strong>HS256</strong> (a shared key) — simplest when your client doesn't verify
      signatures. Switch to <strong>RS256</strong> in <a href="<%= prefix %>/settings">Settings</a> to have

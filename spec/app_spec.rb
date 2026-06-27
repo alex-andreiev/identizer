@@ -24,9 +24,11 @@ RSpec.describe Identizer::App do
   end
   let(:app) { described_class.new(config) }
 
-  # Drive the login form and return the parsed redirect query.
-  def authorize(email: "alice@example.com", password: "password")
-    get "/__select", redirect_uri: "https://app.test/cb", state: "xyz", email: email, password: password
+  # Drive the login selection step and return the parsed redirect query. Extra
+  # authorization params (scope, nonce, code_challenge, ...) pass straight through.
+  def authorize(email: "alice@example.com", password: "password", **extra)
+    params = { redirect_uri: "https://app.test/cb", state: "xyz", email: email, password: password }
+    get "/__select", params.merge(extra)
     Rack::Utils.parse_query(URI(last_response.headers["location"]).query)
   end
 
@@ -167,10 +169,106 @@ RSpec.describe Identizer::App do
     end
   end
 
+  describe "OIDC: PKCE" do
+    def challenge_for(verifier)
+      Base64.urlsafe_encode64(Digest::SHA256.digest(verifier), padding: false)
+    end
+
+    it "accepts the matching S256 code_verifier" do
+      verifier = "this-is-a-sufficiently-long-code-verifier-123"
+      code = authorize(code_challenge: challenge_for(verifier), code_challenge_method: "S256").fetch("code")
+      post "/v1/token", grant_type: "authorization_code", code: code, code_verifier: verifier
+
+      expect(last_response.status).to eq(200)
+      expect(JSON.parse(last_response.body)).to include("id_token", "refresh_token")
+    end
+
+    it "rejects a wrong code_verifier" do
+      verifier = "this-is-a-sufficiently-long-code-verifier-123"
+      code = authorize(code_challenge: challenge_for(verifier), code_challenge_method: "S256").fetch("code")
+      post "/v1/token", code: code, code_verifier: "wrong"
+
+      expect(last_response.status).to eq(400)
+      expect(JSON.parse(last_response.body)).to include("error" => "invalid_grant")
+    end
+  end
+
+  describe "OIDC: refresh tokens" do
+    it "exchanges a refresh_token for fresh tokens and rotates it" do
+      code = authorize.fetch("code")
+      post "/v1/token", code: code
+      refresh_token = JSON.parse(last_response.body).fetch("refresh_token")
+
+      post "/v1/token", grant_type: "refresh_token", refresh_token: refresh_token
+      expect(last_response.status).to eq(200)
+      expect(JSON.parse(last_response.body)).to include("id_token", "refresh_token")
+
+      # the old refresh token is single-use
+      post "/v1/token", grant_type: "refresh_token", refresh_token: refresh_token
+      expect(last_response.status).to eq(400)
+    end
+
+    it "rejects an unknown refresh_token" do
+      post "/v1/token", grant_type: "refresh_token", refresh_token: "nope"
+      expect(last_response.status).to eq(400)
+    end
+  end
+
+  describe "OIDC: scope + nonce" do
+    it "echoes the requested scope in the token response" do
+      code = authorize(scope: "openid email").fetch("code")
+      post "/v1/token", code: code
+      expect(JSON.parse(last_response.body)).to include("scope" => "openid email")
+    end
+
+    it "binds the nonce into the id_token" do
+      code = authorize(nonce: "n-0S6_WzA2Mj").fetch("code")
+      post "/v1/token", code: code
+      id_token = JSON.parse(last_response.body).fetch("id_token")
+      payload, = JWT.decode(id_token, config.hs256_key, true, algorithm: "HS256")
+      expect(payload).to include("nonce" => "n-0S6_WzA2Mj")
+    end
+  end
+
+  describe "OIDC: RP-initiated logout" do
+    it "redirects to post_logout_redirect_uri with state" do
+      get "/v1/logout", post_logout_redirect_uri: "https://app.test/bye", state: "s1"
+      expect(last_response.status).to eq(302)
+      expect(last_response.headers["location"]).to eq("https://app.test/bye?state=s1")
+    end
+
+    it "shows a signed-out page without a redirect target" do
+      get "/v1/logout"
+      expect(last_response.status).to eq(200)
+      expect(last_response.body).to include("Signed out")
+    end
+  end
+
+  describe "OIDC: client registry" do
+    before { config.clients = [{ client_id: "web" }] }
+
+    it "rejects an unknown client_id" do
+      code = authorize.fetch("code")
+      post "/v1/token", code: code, client_id: "evil"
+      expect(last_response.status).to eq(401)
+      expect(JSON.parse(last_response.body)).to include("error" => "invalid_client")
+    end
+
+    it "accepts a registered client_id" do
+      code = authorize.fetch("code")
+      post "/v1/token", code: code, client_id: "web"
+      expect(last_response.status).to eq(200)
+    end
+  end
+
   describe "OIDC discovery + JWKS" do
     it "serves the discovery document" do
       get "/.well-known/openid-configuration"
-      expect(JSON.parse(last_response.body)).to include("issuer" => config.issuer)
+      doc = JSON.parse(last_response.body)
+      expect(doc).to include("issuer" => config.issuer,
+                             "end_session_endpoint" => "#{config.base_url}/v1/logout")
+      expect(doc["grant_types_supported"]).to include("refresh_token")
+      expect(doc["code_challenge_methods_supported"]).to include("S256")
     end
 
     it "serves a JWKS document" do

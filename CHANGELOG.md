@@ -9,6 +9,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 - Initial release: a local identity provider for developing and testing auth/SSO
   integrations, extracted and decoupled from the tap-v3 SSO emulator.
+- OIDC: PKCE (S256/plain), refresh-token grant (rotated), RP-initiated logout
+  (`/v1/logout`), `nonce` in the id_token, `scope` echo, and an optional client
+  registry. Discovery advertises these.
 - OIDC and OAuth2 flows, AWS Cognito / Auth0 broker emulation, and cosmetic SAML
   metadata.
 - HS256 (default) and RS256 token signing with OIDC discovery and a published JWKS.

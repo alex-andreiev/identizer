@@ -12,6 +12,7 @@ require "jwt"
 
 require_relative "identizer/version"
 require_relative "identizer/identity"
+require_relative "identizer/authorization"
 require_relative "identizer/directory_entry"
 require_relative "identizer/identity_store"
 require_relative "identizer/configuration"

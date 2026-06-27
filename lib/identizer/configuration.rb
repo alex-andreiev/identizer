@@ -24,7 +24,11 @@ module Identizer
       @ldap_host = nil
       @ldap_port = optional_int_env("IDENTIZER_LDAP_PORT") # nil = LDAP listener off
       @seed_identities = []
+      @clients = [] # optional OAuth client registry: [{ client_id:, client_secret:, redirect_uris: }]
     end
+
+    # Registered OAuth clients. Empty = accept any client_id (lenient dev default).
+    attr_accessor :clients
 
     # Public URL the provider advertises in metadata, discovery and redirects.
     def base_url

@@ -8,18 +8,17 @@ module Identizer
     class Auth0 < Base
       def token(request)
         code = code_param(request)
-        identity = sessions[code]
-        return json(400, { error: "invalid_grant" }) if identity.nil?
+        return json(400, { error: "invalid_grant" }) if sessions[code].nil?
 
         # The access_token IS the code; /userinfo resolves it to the profile.
         json(200, { access_token: code, token_type: "Bearer" })
       end
 
       def userinfo(request)
-        identity = sessions[bearer(request)]
-        return json(401, { error: "invalid_token" }) if identity.nil?
+        authorization = sessions[bearer(request)]
+        return json(401, { error: "invalid_token" }) if authorization.nil?
 
-        json(200, identity.to_h)
+        json(200, authorization.identity.to_h)
       end
     end
   end

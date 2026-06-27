@@ -13,22 +13,25 @@ module Identizer
       @config = config
     end
 
-    def id_token(identity)
+    def id_token(identity, nonce: nil)
+      payload = payload(identity, nonce: nonce)
       if @config.rs256?
-        JWT.encode(payload(identity), rsa_key, "RS256", { kid: jwk.kid })
+        JWT.encode(payload, rsa_key, "RS256", { kid: jwk.kid })
       else
-        JWT.encode(payload(identity), @config.hs256_key, "HS256")
+        JWT.encode(payload, @config.hs256_key, "HS256")
       end
     end
 
-    def payload(identity)
+    def payload(identity, nonce: nil)
       now = Time.now.to_i
-      {
+      claims = {
         "iss" => @config.issuer,
         "aud" => "identizer",
         "iat" => now,
         "exp" => now + 3600
-      }.merge(identity.to_h)
+      }
+      claims["nonce"] = nonce unless nonce.to_s.empty?
+      claims.merge(identity.to_h)
     end
 
     def jwks
@@ -45,8 +48,10 @@ module Identizer
         "token_endpoint" => "#{base}/v1/token",
         "userinfo_endpoint" => "#{base}/userinfo",
         "jwks_uri" => "#{base}/.well-known/jwks.json",
+        "end_session_endpoint" => "#{base}/v1/logout",
         "response_types_supported" => ["code"],
-        "grant_types_supported" => ["authorization_code"],
+        "grant_types_supported" => %w[authorization_code refresh_token],
+        "code_challenge_methods_supported" => %w[S256 plain],
         "subject_types_supported" => ["public"],
         "id_token_signing_alg_values_supported" => [@config.rs256? ? "RS256" : "HS256"],
         "scopes_supported" => %w[openid email profile]

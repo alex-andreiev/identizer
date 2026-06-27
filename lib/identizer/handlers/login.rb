@@ -6,14 +6,14 @@ module Identizer
     # Auth0 and OIDC authorize endpoints) and the selection step that mints a
     # code and redirects back to the app.
     class Login < Base
+      # The authorization-request parameters that must survive the login form.
+      CARRIED_PARAMS = %w[redirect_uri state scope nonce code_challenge code_challenge_method].freeze
+
       def form(request)
-        redirect_uri = escape_html(request.params["redirect_uri"].to_s)
-        state = escape_html(request.params["state"].to_s)
         emails = store.emails
-        first_email = emails.first.to_s
         options = emails.map { |email| "<option value=\"#{escape_html(email)}\">" }.join
 
-        html(form_html(request.script_name, redirect_uri, state, first_email, options))
+        html(form_html(request.script_name, carried_fields(request), emails.first.to_s, options))
       end
 
       def select(request)
@@ -31,11 +31,29 @@ module Identizer
         end
 
         code = SecureRandom.hex(20)
-        sessions[code] = store.identity_for(email)
+        sessions[code] = authorization_for(request, email)
         auth_redirect(redirect_uri, state, code: code)
       end
 
       private
+
+      def authorization_for(request, email)
+        Authorization.new(
+          identity: store.identity_for(email),
+          code_challenge: request.params["code_challenge"],
+          code_challenge_method: request.params["code_challenge_method"],
+          scope: request.params["scope"],
+          nonce: request.params["nonce"]
+        )
+      end
+
+      # Hidden <input>s re-emitting the carried authorization params into /__select.
+      def carried_fields(request)
+        CARRIED_PARAMS.map do |name|
+          value = escape_html(request.params[name].to_s)
+          "<input type=\"hidden\" name=\"#{name}\" value=\"#{value}\">"
+        end.join("\n              ")
+      end
 
       def error_redirect(redirect_uri, state, error, description)
         auth_redirect(redirect_uri, state, error: error, error_description: description)
@@ -50,7 +68,7 @@ module Identizer
         redirect("#{redirect_uri}#{separator}#{query}")
       end
 
-      def form_html(prefix, redirect_uri, state, first_email, options)
+      def form_html(prefix, hidden_fields, first_email, options)
         <<~HTML
           <!doctype html><html><head><meta charset="utf-8"><title>Identizer — Sign in</title></head>
           <body style="font-family:sans-serif;max-width:480px;margin:64px auto">
@@ -60,8 +78,7 @@ module Identizer
                wrong password or an unconfigured email to test the provider's error
                response.</p>
             <form method="get" action="#{prefix}/__select">
-              <input type="hidden" name="redirect_uri" value="#{redirect_uri}">
-              <input type="hidden" name="state" value="#{state}">
+              #{hidden_fields}
               <input name="email" type="email" required autofocus list="identizer-emails"
                      value="#{escape_html(first_email)}" placeholder="user@example.com"
                      style="width:100%;padding:8px">
