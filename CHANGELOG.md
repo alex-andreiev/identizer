@@ -7,6 +7,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added (follow-ups)
+- OIDC token introspection (RFC 7662) at `/introspect` and token revocation
+  (RFC 7009) at `/revoke` (plus the Okta `/oauth2/v1/*` aliases); advertised in
+  discovery.
 - SAML EncryptedAssertion: encrypt the signed assertion (AES-256-CBC + RSA-OAEP)
   under the SP's certificate (`saml_encrypt_assertion` + `saml_sp_certificate`),
   for SPs that require encryption. Decryptable by standard SPs (ruby-saml).

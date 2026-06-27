@@ -50,6 +50,8 @@ module Identizer
         "token_endpoint" => "#{base}/v1/token",
         "userinfo_endpoint" => "#{base}/userinfo",
         "jwks_uri" => "#{base}/.well-known/jwks.json",
+        "introspection_endpoint" => "#{base}/introspect",
+        "revocation_endpoint" => "#{base}/revoke",
         "end_session_endpoint" => "#{base}/v1/logout",
         "response_types_supported" => ["code"],
         "grant_types_supported" => %w[authorization_code refresh_token],

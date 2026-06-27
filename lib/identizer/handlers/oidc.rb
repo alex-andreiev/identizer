@@ -20,6 +20,29 @@ module Identizer
         json(200, minter.jwks)
       end
 
+      # RFC 7662 token introspection.
+      def introspect(request)
+        token = merged_params(request)["token"]
+        authorization = token && access_tokens.get(token)
+        return json(200, { active: false }) if authorization.nil?
+
+        identity = authorization.identity
+        json(200, {
+          active: true, sub: identity.sub, username: identity.email,
+          scope: authorization.scope, client_id: authorization.client_id, token_type: "Bearer"
+        }.compact)
+      end
+
+      # RFC 7009 token revocation (always 200, even for unknown tokens).
+      def revoke(request)
+        token = merged_params(request)["token"]
+        if token
+          access_tokens.take(token)
+          refresh_tokens.take(token)
+        end
+        json(200, {})
+      end
+
       # RP-initiated logout: bounce back to post_logout_redirect_uri if given.
       def logout(request)
         target = request.params["post_logout_redirect_uri"].to_s

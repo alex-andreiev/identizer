@@ -100,6 +100,8 @@ module Identizer
       in ["POST", "/v1/token" | "/oauth2/v1/token"] then @oidc.token(request)
       in ["GET", "/v1/logout"] then @oidc.logout(request)
       in ["GET", "/userinfo" | "/oauth2/v1/userinfo"] then @auth0.userinfo(request)
+      in ["POST", "/introspect" | "/oauth2/v1/introspect"] then @oidc.introspect(request)
+      in ["POST", "/revoke" | "/oauth2/v1/revoke"] then @oidc.revoke(request)
       in ["GET", "/.well-known/openid-configuration"] then @oidc.discovery
       in ["GET", "/jwks" | "/.well-known/jwks.json" | "/oauth2/v1/keys"] then @oidc.jwks
       else nil

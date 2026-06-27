@@ -350,12 +350,43 @@ RSpec.describe Identizer::App do
     end
   end
 
+  describe "OIDC: introspection + revocation" do
+    def issue_access_token(scope: "openid email")
+      code = authorize(scope: scope, client_id: "demo").fetch("code")
+      post "/v1/token", code: code
+      JSON.parse(last_response.body).fetch("access_token")
+    end
+
+    it "introspects an active token" do
+      post "/introspect", token: issue_access_token
+      expect(JSON.parse(last_response.body)).to include(
+        "active" => true, "username" => "alice@example.com", "scope" => "openid email", "client_id" => "demo"
+      )
+    end
+
+    it "reports an unknown token as inactive" do
+      post "/introspect", token: "nope"
+      expect(JSON.parse(last_response.body)).to eq("active" => false)
+    end
+
+    it "revokes a token, after which introspection is inactive" do
+      token = issue_access_token
+      post "/revoke", token: token
+      expect(last_response.status).to eq(200)
+
+      post "/introspect", token: token
+      expect(JSON.parse(last_response.body)).to eq("active" => false)
+    end
+  end
+
   describe "OIDC discovery + JWKS" do
     it "serves the discovery document" do
       get "/.well-known/openid-configuration"
       doc = JSON.parse(last_response.body)
       expect(doc).to include("issuer" => config.issuer,
-                             "end_session_endpoint" => "#{config.base_url}/v1/logout")
+                             "end_session_endpoint" => "#{config.base_url}/v1/logout",
+                             "introspection_endpoint" => "#{config.base_url}/introspect",
+                             "revocation_endpoint" => "#{config.base_url}/revoke")
       expect(doc["grant_types_supported"]).to include("refresh_token")
       expect(doc["code_challenge_methods_supported"]).to include("S256")
     end
