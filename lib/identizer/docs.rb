@@ -8,6 +8,7 @@ module Identizer
       { slug: "getting-started", title: "Getting started" },
       { slug: "oidc", title: "OIDC integration" },
       { slug: "cognito", title: "AWS Cognito broker" },
+      { slug: "broker-app", title: "Cheatsheet: Cognito-brokered app" },
       { slug: "saml", title: "SAML" },
       { slug: "ldap", title: "LDAP listener" },
       { slug: "tls", title: "TLS & mkcert" },

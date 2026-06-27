@@ -70,10 +70,13 @@ RSpec.describe Identizer::App do
 
     it "serves the docs index and a doc page" do
       get "/docs"
-      expect(last_response.body).to include("Getting started")
+      expect(last_response.body).to include("Getting started", "Cheatsheet: Cognito-brokered app")
       get "/docs/oidc"
       expect(last_response.status).to eq(200)
       expect(last_response.body).to include("OIDC")
+      get "/docs/broker-app"
+      expect(last_response.status).to eq(200)
+      expect(last_response.body).to include("OIDC issuer URL", "#{config.base_url}/saml/sso")
       get "/docs/nope"
       expect(last_response.status).to eq(404)
     end

@@ -1,0 +1,59 @@
+<p class="muted"><a href="<%= prefix %>/docs">&larr; Docs</a></p>
+<article>
+  <h1>Cheatsheet: Cognito-brokered app</h1>
+  <p class="lead">A common pattern: your app federates external IdPs through an AWS Cognito user pool, where each
+     tenant's provider is either OIDC or SAML. Identizer stands in for Cognito (provider-save) and for the
+     upstream IdP (login). Here are the exact values to put in each provider type.</p>
+
+  <h2>0. Point the broker at Identizer</h2>
+  <pre>COGNITO_ENDPOINT=<%= h(config.base_url) %>      # provider-save: management API is stubbed</pre>
+  <p>Add a user on the <a href="<%= prefix %>/directory">Directory</a> page; the password is the shared
+     password from <a href="<%= prefix %>/settings">Settings</a>.</p>
+
+  <h2>OIDC provider</h2>
+  <table>
+    <tr><th>OIDC issuer URL</th><td class="mono"><%= h(config.base_url) %></td></tr>
+    <tr><th>Client ID</th><td class="mono">dev-client (any value)</td></tr>
+    <tr><th>Client secret</th><td class="mono">dev-secret (any value)</td></tr>
+    <tr><th>Authorize scopes</th><td class="mono">openid</td></tr>
+    <tr><th>Attribute request method</th><td class="mono">GET</td></tr>
+    <tr><th>Email / Given name / Family name attribute</th><td class="mono">email / given_name / family_name</td></tr>
+  </table>
+  <p class="muted">Endpoints are auto-discovered from <span class="mono"><%= h(config.base_url) %>/.well-known/openid-configuration</span>,
+     so the exact paths don't matter to the client.</p>
+
+  <h2>SAML provider</h2>
+  <table>
+    <tr><th>Metadata URL</th><td class="mono"><%= h(config.base_url) %>/metadata</td></tr>
+    <tr><th>SSO URL</th><td class="mono"><%= h(config.base_url) %>/saml/sso</td></tr>
+    <tr><th>NameID</th><td class="mono">emailAddress</td></tr>
+    <tr><th>Email / Given name / Family name attribute</th><td class="mono">email / given_name / family_name</td></tr>
+  </table>
+  <p class="muted">Or download the metadata from the link on <a href="<%= prefix %>/metadata?download=1">/metadata</a>
+     to test a "metadata file" upload field.</p>
+
+  <h2>SAML brokered via Auth0 (encryption flow)</h2>
+  <p>For providers that exchange the code at <span class="mono">/oauth/token</span> and read the profile from
+     <span class="mono">/userinfo</span>, set the Auth0 domain to Identizer:</p>
+  <pre>SSO_AUTH0_DOMAIN=<%= h(config.base_url.sub(%r{\Ahttps?://}, "")) %>   # bare host, no scheme</pre>
+
+  <h2>Matching attribute names</h2>
+  <p>The broker maps each provider's attributes onto your app's fields (e.g. <span class="mono">email</span>,
+     <span class="mono">given_name</span>, <span class="mono">family_name</span>, or custom ones). Identizer emits
+     attributes/claims named after the directory entry's attributes:</p>
+  <ul>
+    <li><span class="mono">mail → email</span>, <span class="mono">givenName → given_name</span>,
+        <span class="mono">sn → family_name</span> (set these on the Directory page).</li>
+    <li>For any extra/custom attribute name a provider would send, add it as a claim on the entry via
+        <span class="mono">config.seed_identities</span> (or the JSON/SQLite store) — Identizer passes it through
+        under that exact name in both OIDC claims and SAML attributes.</li>
+  </ul>
+
+  <pre>Identizer.configure do |c|
+  c.seed_identities = [
+    # standard + any custom attributes as plain keys; they pass straight through
+    { mail: "alice@example.com", givenName: "Alice", sn: "Doe",
+      custom_1: "12345", department: "eng" }
+  ]
+end</pre>
+</article>
