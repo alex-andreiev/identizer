@@ -28,6 +28,10 @@ module Identizer
       json(404, { error: message })
     end
 
+    def no_content
+      [204, {}, []]
+    end
+
     def escape_html(value)
       CGI.escapeHTML(value.to_s)
     end

@@ -53,6 +53,14 @@ module Identizer
         request.content_type.to_s.include?("json")
       end
 
+      # Form params merged with a JSON body, so handlers work for either encoding.
+      def merged_params(request)
+        json = json_request?(request) ? parse_json(request) : {}
+        request.params.merge(json)
+      rescue StandardError
+        request.params
+      end
+
       def safe_json(raw)
         JSON.parse(raw.to_s)
       rescue JSON::ParserError

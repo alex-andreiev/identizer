@@ -13,6 +13,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (`/v1/logout`), `nonce` in the id_token, `scope` echo, and an optional client
   registry. Discovery advertises these.
 - OIDC and OAuth2 flows, AWS Cognito / Auth0 broker emulation.
+- Auth0 Management API emulation: `client_credentials` token grant plus
+  `/api/v2/clients` and `/api/v2/connections` (create/list/update/delete), so a
+  brokering app can provision/deprovision applications like the Cognito stub.
 - Real SAML 2.0 IdP: signed assertions (XML-DSig / RSA-SHA256), metadata, SP- and
   IdP-initiated SSO with a signed-Response auto-POST (`nokogiri`, loaded on demand).
 - HS256 (default) and RS256 token signing with OIDC discovery and a published JWKS.

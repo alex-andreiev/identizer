@@ -36,6 +36,12 @@
   <p>For providers that exchange the code at <span class="mono">/oauth/token</span> and read the profile from
      <span class="mono">/userinfo</span>, set the Auth0 domain to Identizer:</p>
   <pre>SSO_AUTH0_DOMAIN=<%= h(config.base_url.sub(%r{\Ahttps?://}, "")) %>   # bare host, no scheme</pre>
+  <p>Identizer also emulates the <strong>Auth0 Management API</strong> at that domain — the
+     <span class="mono">client_credentials</span> token grant plus <span class="mono">/api/v2/clients</span> and
+     <span class="mono">/api/v2/connections</span> (create / list / update / delete). So your app can provision
+     the application + SAML connection on provider save and tear them down on remove, exactly like real Auth0
+     (returns generated <span class="mono">client_id</span>/<span class="mono">client_secret</span> and a
+     <span class="mono">con_…</span> connection id).</p>
 
   <h2>Matching attribute names</h2>
   <p>The broker maps each provider's attributes onto your app's fields (e.g. <span class="mono">email</span>,

@@ -20,6 +20,7 @@ module Identizer
       @login = Handlers::Login.new(context)
       @cognito = Handlers::Cognito.new(context)
       @auth0 = Handlers::Auth0.new(context)
+      @auth0_management = Handlers::Auth0Management.new(context)
       @oidc = Handlers::Oidc.new(context)
       @saml = Handlers::Saml.new(context)
     end
@@ -40,7 +41,27 @@ module Identizer
     private
 
     def route(request)
-      admin(request) || idp(request) || not_found("No route for #{request.request_method} #{request.path_info}")
+      admin(request) || idp(request) || auth0_management(request) ||
+        not_found("No route for #{request.request_method} #{request.path_info}")
+    end
+
+    # Auth0 Management API: provision/deprovision applications and connections.
+    def auth0_management(request)
+      case [request.request_method, request.path_info]
+      in ["POST", "/api/v2/clients"] then @auth0_management.create_client(request)
+      in ["GET", "/api/v2/clients"] then @auth0_management.list_clients(request)
+      in ["POST", "/api/v2/connections"] then @auth0_management.create_connection(request)
+      in ["GET", "/api/v2/connections"] then @auth0_management.list_connections(request)
+      in ["PATCH", String => path] if path.start_with?("/api/v2/clients/")
+        @auth0_management.update_client(request, path.delete_prefix("/api/v2/clients/"))
+      in ["DELETE", String => path] if path.start_with?("/api/v2/clients/")
+        @auth0_management.delete_client(request, path.delete_prefix("/api/v2/clients/"))
+      in ["PATCH", String => path] if path.start_with?("/api/v2/connections/")
+        @auth0_management.update_connection(request, path.delete_prefix("/api/v2/connections/"))
+      in ["DELETE", String => path] if path.start_with?("/api/v2/connections/")
+        @auth0_management.delete_connection(request, path.delete_prefix("/api/v2/connections/"))
+      else nil
+      end
     end
 
     # Web admin surface.
