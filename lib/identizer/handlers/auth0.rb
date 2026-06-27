@@ -22,7 +22,9 @@ module Identizer
       end
 
       def userinfo(request)
-        authorization = sessions[bearer(request)]
+        token = bearer(request)
+        # Resolve either an OIDC/Okta access_token or the Auth0 code-as-token.
+        authorization = access_tokens[token] || sessions[token]
         return json(401, { error: "invalid_token" }) if authorization.nil?
 
         json(200, authorization.identity.to_h)

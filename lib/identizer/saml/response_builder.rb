@@ -14,6 +14,7 @@ module Identizer
       BEARER = "urn:oasis:names:tc:SAML:2.0:cm:bearer"
       EMAIL_FORMAT = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
       BASIC_FORMAT = "urn:oasis:names:tc:SAML:2.0:attrname-format:basic"
+      URI_FORMAT = "urn:oasis:names:tc:SAML:2.0:attrname-format:uri"
       PASSWORD_CONTEXT = "urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
       VALIDITY = 300
 
@@ -83,13 +84,23 @@ module Identizer
       end
 
       def attribute_statement(xml, identity)
+        names = @config.saml_attribute_names
         xml["saml"].AttributeStatement do
-          identity.to_h.each do |name, value|
-            xml["saml"].Attribute(Name: name, NameFormat: BASIC_FORMAT) do
+          identity.to_h.each do |claim, value|
+            xml["saml"].Attribute(attribute_naming(claim, names)) do
               Array(value).each { |item| xml["saml"].AttributeValue(item.to_s) }
             end
           end
         end
+      end
+
+      # Map a claim to its SAML Attribute name/format, keeping the short claim
+      # name as FriendlyName when a URI name is configured.
+      def attribute_naming(claim, names)
+        mapped = names[claim]
+        return { Name: claim, NameFormat: BASIC_FORMAT } unless mapped
+
+        { Name: mapped, FriendlyName: claim, NameFormat: URI_FORMAT }
       end
 
       def response_attributes(response_id, acs_url, in_response_to, now)

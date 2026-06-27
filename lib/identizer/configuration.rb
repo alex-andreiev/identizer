@@ -7,7 +7,6 @@ module Identizer
     attr_accessor :host, :port, :tls_cert_path, :tls_key_path, :config_dir,
                   :shared_password, :signing, :hs256_key, :scheme, :url_host, :ldap_base_dn,
                   :ldap_host, :ldap_port, :ldaps_port
-    attr_writer :identity_store, :base_url, :issuer, :seed_identities, :providers, :saml_keypair
 
     def initialize
       @host = "127.0.0.1"
@@ -41,6 +40,23 @@ module Identizer
         Saml::Keypair.load_or_generate(config_dir)
       end
     end
+
+    # Claim -> SAML Attribute Name. Defaults to the Microsoft/WS-Fed claim URIs
+    # that real SAML IdPs (Azure AD, ADFS, Okta) emit and SPs match on; the short
+    # claim name is kept as the FriendlyName. Override to suit a specific SP.
+    SAML_ATTRIBUTE_NAMES = {
+      "email" => "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
+      "given_name" => "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname",
+      "family_name" => "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname",
+      "name" => "http://schemas.microsoft.com/identity/claims/displayname",
+      "groups" => "http://schemas.microsoft.com/ws/2008/06/identity/claims/groups"
+    }.freeze
+
+    def saml_attribute_names
+      @saml_attribute_names ||= SAML_ATTRIBUTE_NAMES.dup
+    end
+
+    attr_writer :identity_store, :base_url, :issuer, :seed_identities, :providers, :saml_keypair, :saml_attribute_names
 
     # Public URL the provider advertises in metadata, discovery and redirects.
     def base_url

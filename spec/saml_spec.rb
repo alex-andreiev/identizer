@@ -78,7 +78,12 @@ RSpec.describe "SAML IdP" do
       response = validate(saml_response_from(last_response.body))
       expect(response.is_valid?).to be(true)
       expect(response.nameid).to eq("alice@example.com")
-      expect(response.attributes["given_name"]).to eq("Alice")
+
+      # Attributes use realistic claim URIs; SPs match them by name (e.g. /givenname/i).
+      names = response.attributes.all.keys
+      expect(names).to include(a_string_matching(/givenname/i), a_string_matching(/surname/i))
+      given = Identizer::Configuration::SAML_ATTRIBUTE_NAMES.fetch("given_name")
+      expect(response.attributes[given]).to eq("Alice")
     end
 
     it "renders an error for a wrong password" do

@@ -56,9 +56,11 @@ module Identizer
       def issue(authorization)
         refresh_token = SecureRandom.hex(20)
         refresh_tokens[refresh_token] = authorization
+        access_token = SecureRandom.hex(20)
+        access_tokens[access_token] = authorization # so /userinfo can resolve it
 
         body = {
-          access_token: SecureRandom.hex(20),
+          access_token: access_token,
           id_token: minter.id_token(authorization.identity, nonce: authorization.nonce),
           token_type: "Bearer",
           expires_in: 3600,

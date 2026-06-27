@@ -15,12 +15,13 @@ module Identizer
         @minter = context.minter
         @sessions = context.sessions
         @refresh_tokens = context.refresh_tokens
+        @access_tokens = context.access_tokens
         @renderer = context.renderer
       end
 
       private
 
-      attr_reader :config, :store, :minter, :sessions, :refresh_tokens, :renderer
+      attr_reader :config, :store, :minter, :sessions, :refresh_tokens, :access_tokens, :renderer
 
       # Render a web-admin page through the shared layout.
       def page(template, request, nav:, title:, **locals)

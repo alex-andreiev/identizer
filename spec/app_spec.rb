@@ -264,6 +264,26 @@ RSpec.describe Identizer::App do
     end
   end
 
+  describe "Okta-style OAuth2 endpoints" do
+    it "serves the authorize form" do
+      get "/oauth2/v1/authorize", redirect_uri: "https://app.test/cb"
+      expect(last_response.status).to eq(200)
+      expect(last_response.body).to include("alice@example.com")
+    end
+
+    it "exchanges the code for tokens, then resolves the profile at userinfo" do
+      code = authorize.fetch("code")
+      post "/oauth2/v1/token", code: code
+      body = JSON.parse(last_response.body)
+      expect(body).to include("access_token", "id_token")
+
+      header "Authorization", "Bearer #{body['access_token']}"
+      get "/oauth2/v1/userinfo"
+      expect(last_response.status).to eq(200)
+      expect(JSON.parse(last_response.body)).to include("email" => "alice@example.com", "name" => "Alice Doe")
+    end
+  end
+
   describe "OIDC discovery + JWKS" do
     it "serves the discovery document" do
       get "/.well-known/openid-configuration"

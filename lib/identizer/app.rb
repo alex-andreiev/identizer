@@ -8,11 +8,11 @@ module Identizer
   class App
     include Responses
 
-    Context = Struct.new(:config, :store, :minter, :sessions, :refresh_tokens, :renderer)
+    Context = Struct.new(:config, :store, :minter, :sessions, :refresh_tokens, :access_tokens, :renderer)
 
     def initialize(config = Identizer.configuration)
       @config = config
-      context = Context.new(config, config.identity_store, TokenMinter.new(config), {}, {}, Renderer.new)
+      context = Context.new(config, config.identity_store, TokenMinter.new(config), {}, {}, {}, Renderer.new)
       @overview = Handlers::Overview.new(context)
       @directory = Handlers::Directory.new(context)
       @settings = Handlers::Settings.new(context)
@@ -86,15 +86,17 @@ module Identizer
       in ["GET", "/metadata" | "/saml/metadata"] then @saml.metadata(request)
       in ["GET" | "POST", "/saml/sso"] then @saml.sso(request)
       in ["POST", "/saml/finish"] then @saml.finish(request)
-      in ["GET", "/login" | "/authorize" | "/v1/authorize"] then @login.form(request)
+      # Includes the Okta-style /oauth2/v1/* paths (omniauth-okta and other
+      # fixed-path OAuth2 clients) alongside the canonical ones.
+      in ["GET", "/login" | "/authorize" | "/v1/authorize" | "/oauth2/v1/authorize"] then @login.form(request)
       in ["GET", "/__select"] then @login.select(request)
       in ["POST", "/oauth2/token"] then @cognito.token(request)
       in ["POST", "/oauth/token"] then @auth0.token(request)
-      in ["POST", "/v1/token"] then @oidc.token(request)
+      in ["POST", "/v1/token" | "/oauth2/v1/token"] then @oidc.token(request)
       in ["GET", "/v1/logout"] then @oidc.logout(request)
-      in ["GET", "/userinfo"] then @auth0.userinfo(request)
+      in ["GET", "/userinfo" | "/oauth2/v1/userinfo"] then @auth0.userinfo(request)
       in ["GET", "/.well-known/openid-configuration"] then @oidc.discovery
-      in ["GET", "/jwks" | "/.well-known/jwks.json"] then @oidc.jwks
+      in ["GET", "/jwks" | "/.well-known/jwks.json" | "/oauth2/v1/keys"] then @oidc.jwks
       else nil
       end
     end
