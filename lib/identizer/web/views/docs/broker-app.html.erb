@@ -50,9 +50,11 @@
   <ul>
     <li><span class="mono">mail → email</span>, <span class="mono">givenName → given_name</span>,
         <span class="mono">sn → family_name</span> (set these on the Directory page).</li>
-    <li>For any extra/custom attribute name a provider would send, add it as a claim on the entry via
-        <span class="mono">config.seed_identities</span> (or the JSON/SQLite store) — Identizer passes it through
-        under that exact name in both OIDC claims and SAML attributes.</li>
+    <li>For any extra/custom attribute name a provider would send (e.g. <span class="mono">custom_1</span>),
+        add it in the <a href="<%= prefix %>/directory">Directory</a> entry's
+        <em>Custom attributes</em> field (<span class="mono">name = value</span>) or via
+        <span class="mono">config.seed_identities</span> — Identizer passes it through under that exact name
+        in both OIDC claims and SAML attributes.</li>
   </ul>
 
   <pre>Identizer.configure do |c|

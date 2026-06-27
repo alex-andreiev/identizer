@@ -71,6 +71,7 @@ module Identizer
     # Web admin surface.
     def admin(request)
       case [request.request_method, request.path_info]
+      in ["GET", "/healthz"] then json(200, { status: "ok", name: "identizer", version: Identizer::VERSION })
       in ["GET", "/"] then @overview.index(request)
       in ["GET", "/directory"] then @directory.index(request)
       in ["POST", "/directory"] then @directory.create(request)

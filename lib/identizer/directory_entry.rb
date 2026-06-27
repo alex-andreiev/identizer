@@ -45,6 +45,12 @@ module Identizer
     def ou = self["ou"] || DEFAULT_OU
     def groups = Array(self["memberOf"]).reject { |group| group.to_s.empty? }
 
+    # Attributes beyond the standard editable set — provider-specific names a SP
+    # might expect (e.g. custom_1, department). Emitted verbatim as claims.
+    def custom_attributes
+      @attributes.except(*EDITABLE_ATTRIBUTES)
+    end
+
     def dn
       "uid=#{uid},ou=#{ou},#{@base_dn}"
     end

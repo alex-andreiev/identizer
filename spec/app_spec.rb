@@ -54,6 +54,12 @@ RSpec.describe Identizer::App do
       expect(entry.to_identity.to_h).to include("given_name" => "Bob", "family_name" => "Jones")
     end
 
+    it "stores custom attributes from the free-form field as claims" do
+      post "/directory", mail: "carol@example.com", custom_attributes: "custom_1 = 42\ndepartment: Eng"
+      entry = config.identity_store.entries.find { |e| e.mail == "carol@example.com" }
+      expect(entry.to_identity.to_h).to include("custom_1" => "42", "department" => "Eng")
+    end
+
     it "deletes a directory entry" do
       post "/directory/delete", mail: "alice@example.com"
       expect(last_response.status).to eq(302)
@@ -398,6 +404,14 @@ RSpec.describe Identizer::App do
 
     it "is idempotent for unknown operations" do
       expect(management("DeleteIdentityProvider")).to eq({})
+    end
+  end
+
+  describe "health" do
+    it "reports status + version" do
+      get "/healthz"
+      expect(last_response.status).to eq(200)
+      expect(JSON.parse(last_response.body)).to include("status" => "ok", "version" => Identizer::VERSION)
     end
   end
 

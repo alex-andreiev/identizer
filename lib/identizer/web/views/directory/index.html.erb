@@ -58,6 +58,10 @@
   </div>
   <label>memberOf / groups (one per line)</label>
   <textarea name="memberOf"><%= h(editing ? entry.groups.join("\n") : "") %></textarea>
+  <label>Custom attributes (one per line, <span class="mono">name = value</span>)</label>
+  <textarea name="custom_attributes" placeholder="custom_1 = 12345&#10;department = Engineering"><%=
+    h(editing ? entry.custom_attributes.map { |name, value| "#{name} = #{Array(value).join(', ')}" }.join("\n") : "")
+  %></textarea>
   <p>
     <button class="primary" type="submit"><%= editing ? "Save entry" : "Add entry" %></button>
     <% if editing %><a class="btn" href="<%= prefix %>/directory">Cancel</a><% end %>

@@ -26,13 +26,14 @@ module Identizer
       @seed_identities = []
       @clients = [] # optional OAuth client registry: [{ client_id:, client_secret:, redirect_uris: }]
       @saml_allowed_acs = [] # optional allowlist of SAML ACS URLs ([] = allow any, dev default)
+      @saml_sign_response = true # sign the SAML Response in addition to the Assertion
       @code_ttl = 600
       @access_token_ttl = 3600
       @refresh_token_ttl = 86_400
     end
 
     # Grant lifetimes (seconds), enforced by the GrantStore.
-    attr_accessor :code_ttl, :access_token_ttl, :refresh_token_ttl, :saml_allowed_acs
+    attr_accessor :code_ttl, :access_token_ttl, :refresh_token_ttl, :saml_allowed_acs, :saml_sign_response
 
     # Registered OAuth clients. Empty = accept any client_id (lenient dev default).
     attr_accessor :clients

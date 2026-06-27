@@ -6,6 +6,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added (follow-ups)
+- Edit arbitrary custom attributes per directory entry in the web admin (so any
+  provider-specific claim name can be set without code).
+- The SAML Response is signed in addition to the Assertion (configurable via
+  `saml_sign_response`).
+- A `GET /healthz` endpoint reporting status + version.
+
 ### Hardening (code-review follow-ups)
 - Tokens/codes now have enforced TTLs via a thread-safe `GrantStore` (codes 10m,
   access 1h, refresh 24h, all configurable) — expiry is testable and the maps no

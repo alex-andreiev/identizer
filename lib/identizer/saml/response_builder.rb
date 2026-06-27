@@ -26,8 +26,9 @@ module Identizer
       # Returns the signed Response XML string.
       def build(identity:, acs_url:, audience:, in_response_to: nil, now: Time.now)
         document = document_for(identity, acs_url, audience, in_response_to, now)
-        assertion = document.at_xpath("//saml:Assertion", "saml" => ASSERTION)
-        Signer.new(@keypair).sign!(assertion)
+        signer = Signer.new(@keypair)
+        signer.sign!(document.at_xpath("//saml:Assertion", "saml" => ASSERTION))
+        signer.sign!(document.root) if @config.saml_sign_response # sign the Response too
         document.to_xml(save_with: Nokogiri::XML::Node::SaveOptions::AS_XML |
                                    Nokogiri::XML::Node::SaveOptions::NO_DECLARATION)
       end

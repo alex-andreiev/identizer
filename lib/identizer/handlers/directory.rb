@@ -44,11 +44,23 @@ module Identizer
           "givenName" => params["givenName"], "sn" => params["sn"],
           "cn" => params["cn"], "ou" => params["ou"],
           "memberOf" => split_multi(params["memberOf"])
-        }
+        }.merge(custom_attributes(params["custom_attributes"]))
       end
 
       def split_multi(value)
         value.to_s.split(/[\n,]/).map(&:strip).reject(&:empty?)
+      end
+
+      # Parse the free-form "name = value" (or "name: value") textarea into extra
+      # attributes, so any provider-specific claim name can be set from the UI.
+      def custom_attributes(text)
+        text.to_s.lines.each_with_object({}) do |line, acc|
+          key, value = line.split(/[:=]/, 2)
+          next if key.nil? || value.nil?
+
+          name = key.strip
+          acc[name] = value.strip unless name.empty? || value.strip.empty?
+        end
       end
     end
   end

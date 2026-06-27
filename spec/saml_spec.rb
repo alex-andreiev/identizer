@@ -91,6 +91,15 @@ RSpec.describe "SAML IdP" do
       expect(last_response.body).to include("SAML error")
     end
 
+    it "signs both the Response and the Assertion" do
+      post "/saml/finish", email: "alice@example.com", password: "password", acs: acs, audience: audience
+      document = REXML::Document.new(Base64.decode64(saml_response_from(last_response.body)))
+      response_sig = REXML::XPath.first(document, "/*[local-name()='Response']/*[local-name()='Signature']")
+      assertion_sig = REXML::XPath.first(document, "//*[local-name()='Assertion']/*[local-name()='Signature']")
+      expect(response_sig).not_to be_nil
+      expect(assertion_sig).not_to be_nil
+    end
+
     it "rejects an ACS that is not on the allowlist" do
       config.saml_allowed_acs = ["https://trusted.example.com/acs"]
       get "/saml/sso", acs: "https://evil.example.com/acs"
