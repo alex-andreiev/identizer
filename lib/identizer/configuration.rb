@@ -34,27 +34,22 @@ module Identizer
       @request_logging = true # standalone server logs a concise request line
     end
 
+    # All plain settings, grouped (defaults are set in #initialize).
     attr_accessor :host, :port, :tls_cert_path, :tls_key_path, :config_dir, :shared_password, :signing, :hs256_key,
-                  :scheme, :url_host, :ldap_base_dn, :ldap_host, :ldap_port, :ldaps_port, :request_logging
+                  :scheme, :url_host, :request_logging,
+                  :ldap_base_dn, :ldap_host, :ldap_port, :ldaps_port,
+                  :clients,      # OAuth client registry ([] = lenient); enables redirect_uri allowlisting
+                  :sqlite_path,  # set by --sqlite to swap in the SQLite-backed directory
+                  :code_ttl, :access_token_ttl, :refresh_token_ttl, # grant lifetimes (seconds)
+                  :saml_allowed_acs, :saml_sign_response, :saml_encrypt_assertion
 
-    # Grant lifetimes (seconds), enforced by the GrantStore.
-    attr_accessor :code_ttl, :access_token_ttl, :refresh_token_ttl, :saml_allowed_acs,
-                  :saml_sign_response, :saml_encrypt_assertion
-
-    # The SP certificate used to encrypt the assertion, as an OpenSSL cert
-    # (accepts a PEM string or a certificate object).
+    # The SP certificate used to encrypt the assertion (PEM string or cert object).
     def saml_sp_certificate
       cert = @saml_sp_certificate
       return nil if cert.nil?
 
       cert.is_a?(OpenSSL::X509::Certificate) ? cert : OpenSSL::X509::Certificate.new(cert.to_s)
     end
-
-    # Registered OAuth clients. Empty = accept any client_id (lenient dev default).
-    attr_accessor :clients
-
-    # When set (e.g. via `--sqlite`), the CLI swaps in the SQLite-backed directory.
-    attr_accessor :sqlite_path
 
     # The IdP's SAML signing key + certificate, generated/persisted on first use.
     def saml_keypair

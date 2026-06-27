@@ -10,10 +10,12 @@ module Identizer
       CARRIED_PARAMS = %w[redirect_uri state scope nonce code_challenge code_challenge_method client_id].freeze
 
       def form(request)
-        emails = store.emails
-        options = emails.map { |email| "<option value=\"#{escape_html(email)}\">" }.join
-
-        html(form_html(request.script_name, carried_fields(request), emails.first.to_s, options))
+        render_login(
+          title: "Identizer — Sign in", heading: "Identizer — Sign in", note: sign_in_note,
+          form_method: "get", action: "#{request.script_name}/__select",
+          hidden: CARRIED_PARAMS.map { |name| [name, request.params[name]] },
+          config_link: "#{request.script_name}/"
+        )
       end
 
       def select(request)
@@ -25,7 +27,9 @@ module Identizer
         # Validate the redirect target FIRST — never bounce to an unregistered URI,
         # not even on the error paths below (that would be the open redirect).
         unless config.redirect_uri_allowed?(request.params["client_id"], redirect_uri)
-          return html(invalid_redirect_page(redirect_uri))
+          return notice_page("Sign-in blocked",
+                             "redirect_uri <code>#{escape_html(redirect_uri)}</code> is not registered " \
+                             "for this client.")
         end
 
         unless password == config.shared_password
@@ -54,24 +58,14 @@ module Identizer
         )
       end
 
-      # Hidden <input>s re-emitting the carried authorization params into /__select.
-      def carried_fields(request)
-        CARRIED_PARAMS.map do |name|
-          value = escape_html(request.params[name].to_s)
-          "<input type=\"hidden\" name=\"#{name}\" value=\"#{value}\">"
-        end.join("\n              ")
+      def sign_in_note
+        "Sign in as one of the configured identities. The password for every identity is " \
+          "<code>#{escape_html(config.shared_password)}</code> — use a wrong password or an " \
+          "unconfigured email to test the provider's error response."
       end
 
       def error_redirect(redirect_uri, state, error, description)
         auth_redirect(redirect_uri, state, error: error, error_description: description)
-      end
-
-      # Never redirect to a rejected redirect_uri (that would be the open redirect
-      # we're preventing) — render an error page instead.
-      def invalid_redirect_page(redirect_uri)
-        "<!doctype html><html><body style=\"font-family:sans-serif;max-width:480px;margin:64px auto\">" \
-          "<h2>Sign-in blocked</h2><p>redirect_uri <code>#{escape_html(redirect_uri)}</code> is not " \
-          "registered for this client.</p></body></html>"
       end
 
       def auth_redirect(redirect_uri, state, params)
@@ -81,30 +75,6 @@ module Identizer
         separator = redirect_uri.include?("?") ? "&" : "?"
 
         redirect("#{redirect_uri}#{separator}#{query}")
-      end
-
-      def form_html(prefix, hidden_fields, first_email, options)
-        <<~HTML
-          <!doctype html><html><head><meta charset="utf-8"><title>Identizer — Sign in</title></head>
-          <body style="font-family:sans-serif;max-width:480px;margin:64px auto">
-            <h2>Identizer — Sign in</h2>
-            <p>Sign in as one of the configured identities. The password for every
-               identity is <code>#{escape_html(config.shared_password)}</code> — use a
-               wrong password or an unconfigured email to test the provider's error
-               response.</p>
-            <form method="get" action="#{prefix}/__select">
-              #{hidden_fields}
-              <input name="email" type="email" required autofocus list="identizer-emails"
-                     value="#{escape_html(first_email)}" placeholder="user@example.com"
-                     style="width:100%;padding:8px">
-              <datalist id="identizer-emails">#{options}</datalist>
-              <input name="password" type="password" required placeholder="password"
-                     style="width:100%;padding:8px;margin-top:8px">
-              <button type="submit" style="margin-top:16px;padding:8px 16px">Sign in</button>
-            </form>
-            <p style="margin-top:24px"><a href="#{prefix}/">Configure identities</a></p>
-          </body></html>
-        HTML
       end
     end
   end

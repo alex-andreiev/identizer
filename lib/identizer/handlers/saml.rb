@@ -23,19 +23,19 @@ module Identizer
       def sso(request)
         context = authn_context(request)
         return json(400, { error: "no AssertionConsumerServiceURL" }) if context[:acs].to_s.empty?
-        return html(error_page("ACS not allowed: #{context[:acs]}")) unless config.acs_allowed?(context[:acs])
+        return saml_error("ACS not allowed: #{escape_html(context[:acs])}") unless config.acs_allowed?(context[:acs])
 
-        html(login_form(request.script_name, context))
+        login_form(request.script_name, context)
       end
 
       # Validate the login and POST a signed SAML Response back to the SP.
       def finish(request)
         email = request.params["email"].to_s.strip
-        return html(error_page("Invalid credentials")) unless request.params["password"] == config.shared_password
-        return html(error_page("Unknown user: #{email}")) unless store.emails.include?(email)
+        return saml_error("Invalid credentials") unless request.params["password"] == config.shared_password
+        return saml_error("Unknown user: #{escape_html(email)}") unless store.emails.include?(email)
 
         acs = request.params["acs"].to_s
-        return html(error_page("ACS not allowed: #{acs}")) unless config.acs_allowed?(acs)
+        return saml_error("ACS not allowed: #{escape_html(acs)}") unless config.acs_allowed?(acs)
 
         response = build_response(store.identity_for(email), acs, request)
         html(auto_post(acs, response, request.params["relay_state"].to_s))
@@ -111,29 +111,19 @@ module Identizer
       end
 
       def login_form(prefix, context)
-        options = store.emails.map { |email| "<option value=\"#{escape_html(email)}\">" }.join
-        hidden = {
-          "acs" => context[:acs], "audience" => context[:audience],
-          "in_response_to" => context[:in_response_to], "relay_state" => context[:relay_state]
-        }.map { |name, value| "<input type=\"hidden\" name=\"#{name}\" value=\"#{escape_html(value)}\">" }.join
+        render_login(
+          title: "Identizer — SAML sign in", heading: "Identizer — SAML sign in",
+          note: "Signing in to <code>#{escape_html(context[:acs])}</code>. Password for every identity: " \
+                "<code>#{escape_html(config.shared_password)}</code>.",
+          form_method: "post", action: "#{prefix}/saml/finish",
+          hidden: [["acs", context[:acs]], ["audience", context[:audience]],
+                   ["in_response_to", context[:in_response_to]], ["relay_state", context[:relay_state]]],
+          config_link: ""
+        )
+      end
 
-        <<~HTML
-          <!doctype html><html><head><meta charset="utf-8"><title>Identizer — SAML sign in</title></head>
-          <body style="font-family:sans-serif;max-width:480px;margin:64px auto">
-            <h2>Identizer — SAML sign in</h2>
-            <p>Signing in to <code>#{escape_html(context[:acs])}</code>. Password for every identity:
-               <code>#{escape_html(config.shared_password)}</code>.</p>
-            <form method="post" action="#{prefix}/saml/finish">
-              #{hidden}
-              <input name="email" type="email" required autofocus list="identizer-emails"
-                     value="#{escape_html(store.emails.first)}" style="width:100%;padding:8px">
-              <datalist id="identizer-emails">#{options}</datalist>
-              <input name="password" type="password" required placeholder="password"
-                     style="width:100%;padding:8px;margin-top:8px">
-              <button type="submit" style="margin-top:16px;padding:8px 16px">Sign in</button>
-            </form>
-          </body></html>
-        HTML
+      def saml_error(message_html)
+        notice_page("SAML error", message_html)
       end
 
       def auto_post(acs, saml_response, relay_state)
@@ -147,11 +137,6 @@ module Identizer
             </form>
           </body></html>
         HTML
-      end
-
-      def error_page(message)
-        "<!doctype html><html><body style=\"font-family:sans-serif;max-width:480px;margin:64px auto\">" \
-          "<h2>SAML error</h2><p>#{escape_html(message)}</p></body></html>"
       end
     end
   end

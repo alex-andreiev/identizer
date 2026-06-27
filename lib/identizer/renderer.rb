@@ -19,6 +19,11 @@ module Identizer
       render_template(@layout, locals.merge(content: content))
     end
 
+    # Render a standalone template without the admin layout (e.g. the login form).
+    def render_bare(template, **locals)
+      render_template(template, locals)
+    end
+
     private
 
     def render_template(name, locals)

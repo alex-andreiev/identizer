@@ -39,8 +39,10 @@ Metrics/AbcSize:
     - "lib/identizer/saml/encryptor.rb"
     - "spec/**/*"
 
-# The SAML builder threads many SAML-spec parameters through small helpers.
+# Keyword args are self-documenting, so don't count them; the SAML builder also
+# threads many positional SAML-spec parameters through small helpers.
 Metrics/ParameterLists:
+  CountKeywordArgs: false
   Exclude:
     - "lib/identizer/saml/response_builder.rb"
 

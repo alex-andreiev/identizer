@@ -35,5 +35,12 @@ module Identizer
     def escape_html(value)
       CGI.escapeHTML(value.to_s)
     end
+
+    # A small standalone HTML page (errors/notices). `body_html` is inserted raw,
+    # so callers must escape any user-controlled values they put in it.
+    def notice_page(heading, body_html)
+      html("<!doctype html><html><body style=\"font-family:sans-serif;max-width:480px;margin:64px auto\">" \
+           "<h2>#{escape_html(heading)}</h2><p>#{body_html}</p></body></html>")
+    end
   end
 end

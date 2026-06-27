@@ -52,9 +52,9 @@ module Identizer
       # RP-initiated logout: bounce back to post_logout_redirect_uri if given and allowed.
       def logout(request)
         target = request.params["post_logout_redirect_uri"].to_s
-        return html("<p>Signed out.</p>") if target.empty?
+        return notice_page("Signed out", "You have been signed out.") if target.empty?
         unless config.post_logout_redirect_allowed?(request.params["client_id"], target)
-          return html("<p>Signed out. (post_logout_redirect_uri is not registered)</p>")
+          return notice_page("Signed out", "The post_logout_redirect_uri is not registered.")
         end
 
         state = request.params["state"]

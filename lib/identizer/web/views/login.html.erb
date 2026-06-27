@@ -1,0 +1,19 @@
+<!doctype html><html><head><meta charset="utf-8"><title><%= h(title) %></title></head>
+<body style="font-family:sans-serif;max-width:480px;margin:64px auto">
+  <h2><%= h(heading) %></h2>
+  <p><%= note %></p>
+  <form method="<%= h(form_method) %>" action="<%= h(action) %>">
+    <% hidden.each do |name, value| -%>
+    <input type="hidden" name="<%= h(name) %>" value="<%= h(value) %>">
+    <% end -%>
+    <input name="email" type="email" required autofocus list="identizer-emails"
+           value="<%= h(emails.first) %>" placeholder="user@example.com" style="width:100%;padding:8px">
+    <datalist id="identizer-emails"><% emails.each do |email| -%><option value="<%= h(email) %>"><% end -%></datalist>
+    <input name="password" type="password" required placeholder="password"
+           style="width:100%;padding:8px;margin-top:8px">
+    <button type="submit" style="margin-top:16px;padding:8px 16px">Sign in</button>
+  </form>
+  <% unless config_link.to_s.empty? -%>
+  <p style="margin-top:24px"><a href="<%= h(config_link) %>">Configure identities</a></p>
+  <% end -%>
+</body></html>

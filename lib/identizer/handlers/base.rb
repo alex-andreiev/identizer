@@ -28,6 +28,13 @@ module Identizer
         html(renderer.render(template, nav: nav, title: title, prefix: request.script_name, **locals))
       end
 
+      # Render the shared sign-in form (used by the OIDC and SAML login surfaces).
+      def render_login(title:, heading:, note:, form_method:, action:, hidden:, config_link:)
+        html(renderer.render_bare("login", emails: store.emails, title: title, heading: heading, note: note,
+                                           form_method: form_method, action: action, hidden: hidden,
+                                           config_link: config_link))
+      end
+
       def consume(code)
         codes.take(code)
       end
