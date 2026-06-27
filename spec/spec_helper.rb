@@ -16,3 +16,6 @@ RSpec.configure do |config|
   config.order = :random
   Kernel.srand config.seed
 end
+
+# Shared contexts / helpers.
+Dir[File.join(__dir__, "support", "**", "*.rb")].each { |file| require file }

@@ -1,33 +1,15 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "rack/test"
-require "tmpdir"
 
 # Identizer must work both standalone and mounted inside another Rack app at a
 # sub-path. When mounted, internal navigation must honour SCRIPT_NAME.
 RSpec.describe "mounted under a sub-path" do
-  include Rack::Test::Methods
-
-  around do |example|
-    Dir.mktmpdir do |dir|
-      @dir = dir
-      example.run
-    end
-  end
-
-  let(:config) do
-    Identizer::Configuration.new.tap do |c|
-      c.config_dir = @dir
-      c.seed_identities = [{ email: "alice@example.com" }]
-    end
-  end
+  include_context "rack app"
 
   let(:app) do
     inner = Identizer::App.new(config)
-    Rack::Builder.new do
-      map("/idp") { run inner }
-    end.to_app
+    Rack::Builder.new { map("/idp") { run inner } }.to_app
   end
 
   it "serves the overview at the mount point" do

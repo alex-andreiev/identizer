@@ -3,31 +3,14 @@
 require "spec_helper"
 require "identizer/saml"
 require "onelogin/ruby-saml"
-require "rack/test"
 require "rexml/document"
 require "zlib"
-require "tmpdir"
 
 RSpec.describe "SAML IdP" do
-  include Rack::Test::Methods
-
-  around do |example|
-    Dir.mktmpdir do |dir|
-      @dir = dir
-      example.run
-    end
-  end
+  include_context "rack app"
 
   let(:acs) { "https://sp.example.com/acs" }
   let(:audience) { "https://sp.example.com/metadata" }
-  let(:config) do
-    Identizer::Configuration.new.tap do |c|
-      c.config_dir = @dir
-      c.url_host = "idp.test"
-      c.seed_identities = [{ mail: "alice@example.com", givenName: "Alice", sn: "Doe" }]
-    end
-  end
-  let(:app) { Identizer::App.new(config) }
 
   def saml_response_from(body)
     value = body[/name="SAMLResponse" value="([^"]*)"/, 1]

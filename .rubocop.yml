@@ -108,3 +108,7 @@ RSpec/DescribeClass:
 
 RSpec/NamedSubject:
   Enabled: false
+
+# Shared-context names read fine without a when/with/without prefix.
+RSpec/ContextWording:
+  Enabled: false
