@@ -1,6 +1,18 @@
 <h1>Overview</h1>
 <p class="lead">A local identity provider for developing and testing auth/SSO integrations.</p>
 
+<div class="card" style="border-left:4px solid var(--accent)">
+  <strong>New here? Three steps:</strong>
+  <ol style="margin:8px 0 0;padding-left:20px">
+    <li><a href="<%= prefix %>/directory">Add a user</a><% if count.zero? %> — <strong>your directory is empty</strong><% else %> (you have <%= count %>)<% end %>.
+       The sign-in password is in <a href="<%= prefix %>/settings">Settings</a>.</li>
+    <li>Point your app's SSO config at the values below (or in <a href="<%= prefix %>/docs">Docs</a>).</li>
+    <li>Trigger login in your app and sign in as that user.</li>
+  </ol>
+  <p class="muted" style="margin:8px 0 0">Not sure which protocol you need? See
+     <a href="<%= prefix %>/docs/getting-started">Docs → Getting started</a>.</p>
+</div>
+
 <div class="card">
   <table>
     <tr><th>Base URL</th><td class="mono"><%= h(config.base_url) %></td></tr>

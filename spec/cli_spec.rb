@@ -26,6 +26,23 @@ RSpec.describe Identizer::CLI do
     expect(result.url_host).to eq("idp.test")
   end
 
+  it "seeds a demo user on first run so login works out of the box" do
+    result = described_class.new([]).configure(config)
+    expect(result.identity_store.emails).to eq(["demo@example.com"])
+  end
+
+  it "skips the demo user with --no-demo" do
+    result = described_class.new(["--no-demo"]).configure(config)
+    expect(result.seed_identities).to be_empty
+  end
+
+  it "does not override explicitly configured identities with the demo user" do
+    seeded = config
+    seeded.seed_identities = [{ mail: "real@example.com" }]
+    result = described_class.new([]).configure(seeded)
+    expect(result.identity_store.emails).to eq(["real@example.com"])
+  end
+
   it "applies settings previously saved from the web admin" do
     saved = config
     saved.shared_password = "fromfile"

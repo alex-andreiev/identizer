@@ -4,19 +4,47 @@
 
 A local identity provider for developing and testing auth/SSO integrations.
 
-Identizer boots a local IdP that speaks **OIDC** and **OAuth2** and emulates an
-**AWS Cognito / Auth0 SSO broker**, so the whole `popup → callback → login` round
-trip can be configured and run locally without real tenants. Install it as a gem
-and run it standalone, or mount it as a Rack app inside your test suite.
+**The problem it solves:** to test "Sign in with SSO", you normally need a real
+Okta/Auth0/Azure/Cognito tenant, real metadata, real certificates. That's slow to
+set up and impossible to script in CI. Identizer is a fake-but-real IdP you run
+locally: point your app at it, sign in as a test user, done. No accounts, no cloud.
 
-It is built from two halves:
+## Quick start (60 seconds)
 
-- a **directory** of sign-in identities (the pluggable identity store — the "users"), and
+```sh
+gem install identizer
+identizer                       # boots on https://localhost:9999
+```
+
+It prints exactly where to point your app. Open the dashboard at
+`https://localhost:9999/` — a demo user (`demo@example.com`, password `password`)
+is already there, so login works immediately. Then in your app's SSO settings:
+
+- **OIDC / OpenID Connect** → issuer `https://localhost:9999` (the client reads
+  everything else from `/.well-known/openid-configuration`).
+- **SAML** → metadata `https://localhost:9999/metadata`.
+- **OAuth2 / Auth0** → domain `localhost:9999`.
+
+Trigger login in your app, sign in as the demo user, and you're testing the real
+flow. (For browser/server TLS trust, see [TLS](#tls) — one `SSL_CERT_FILE` line.)
+
+## Which protocol do I need?
+
+If you're not sure how your app talks to its IdP, match the setting it asks for:
+
+| Your app's SSO config mentions… | Use | Point it at |
+|---|---|---|
+| "Issuer URL", "discovery", "client ID/secret", `openid` | **OIDC** | `https://localhost:9999` |
+| "Metadata URL/XML", "ACS", "SAML", "certificate" | **SAML** | `https://localhost:9999/metadata` |
+| "Auth0 domain", `/authorize` + `/userinfo` | **OAuth2/Auth0** | `localhost:9999` |
+| "Cognito", "user pool", `COGNITO_ENDPOINT` | **Cognito** | `COGNITO_ENDPOINT=https://localhost:9999` |
+| "LDAP bind", `ldap://` | **LDAP** | `identizer --ldap-port 1389` |
+
+## How it works (two halves)
+
+- a **directory** of sign-in identities (the pluggable "users" store), and
 - a **provider** that accepts auth requests, signs the user in, and hands the
-  profile back over whichever protocol your app expects.
-
-SSO is just one flow over that machinery; the same provider serves plain OIDC and
-OAuth2 logins too.
+  profile back over whichever protocol your app expects (OIDC, OAuth2, SAML, …).
 
 ## Why not an existing tool?
 

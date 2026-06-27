@@ -86,17 +86,23 @@ module Identizer
       base = @config.base_url
       puts <<~BANNER
         ────────────────────────────────────────────────────────────
-        Identizer listening on #{base} (TLS)
-        ────────────────────────────────────────────────────────────
-        Dashboard (identities + provider cheatsheet):
-          #{base}/
-        #{ldap_banner_line}
+         🔑  Identizer is running — a local identity provider for SSO testing
 
-        TLS cert: #{cert_path}
-        Trust it for the app's server-to-server calls (token/userinfo + AWS SDK):
-          recommended — mkcert: `mkcert -install && mkcert localhost 127.0.0.1`,
-            then pass --tls-cert / --tls-key (or set IDENTIZER_TLS_CERT/KEY);
-          or (self-signed) export SSL_CERT_FILE=#{cert_path} for the app process.
+         Dashboard   #{base}/
+                     (manage users & settings, copy provider values)
+         Sign in     any directory user · password: "#{@config.shared_password}"
+
+         Point your app's SSO config at:
+           OIDC      issuer #{base}  (discovery at /.well-known/openid-configuration)
+           SAML      metadata #{base}/metadata · SSO #{base}/saml/sso
+           OAuth2    authorize / token / userinfo under #{base}
+           Cognito   COGNITO_ENDPOINT=#{base}
+        #{ldap_banner_line}
+         New to SSO? Open the dashboard → Docs → "Getting started".
+
+         TLS: self-signed cert at #{cert_path}
+              trust it for server-to-server calls: export SSL_CERT_FILE=#{cert_path}
+              (or use mkcert + --tls-cert/--tls-key). Press Ctrl-C to stop.
         ────────────────────────────────────────────────────────────
       BANNER
     end

@@ -5,12 +5,16 @@ require "optparse"
 module Identizer
   # `identizer` command: configure from flags/env and boot the standalone server.
   class CLI
+    # Seeded on first run so the directory isn't empty and login works immediately.
+    DEMO_USER = { mail: "demo@example.com", givenName: "Demo", sn: "User" }.freeze
+
     def self.start(argv)
       new(argv).run
     end
 
     def initialize(argv)
       @argv = argv
+      @demo = true
     end
 
     def run
@@ -24,6 +28,7 @@ module Identizer
     def configure(config = Identizer.configuration)
       parser(config).parse!(@argv)
       config.apply_persisted_settings! # web-admin saved password/signing
+      config.seed_identities = [DEMO_USER] if @demo && config.seed_identities.empty?
       load_sqlite(config) if config.sqlite_path
       config
     end
@@ -66,6 +71,7 @@ module Identizer
           config.sqlite_path = value
         end
         opts.on("--rs256", "Sign id_tokens with RS256 + publish JWKS") { config.signing = :rs256 }
+        opts.on("--no-demo", "Don't seed the demo user on first run") { @demo = false }
         opts.on("--ldap-port PORT", Integer, "Also start an LDAP listener on PORT") { |value| config.ldap_port = value }
         opts.on("--ldaps-port PORT", Integer, "Also start an LDAPS (TLS) listener on PORT") do |value|
           config.ldaps_port = value
