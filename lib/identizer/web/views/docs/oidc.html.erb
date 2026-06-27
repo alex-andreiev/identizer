@@ -17,7 +17,10 @@ JWKS          <%= h(config.base_url) %>/.well-known/jwks.json</pre>
     <li><strong>RP-initiated logout</strong> at <span class="mono"><%= h(config.base_url) %>/v1/logout</span>
         (<span class="mono">post_logout_redirect_uri</span>)</li>
     <li><span class="mono">nonce</span> bound into the id_token; <span class="mono">scope</span> echoed back</li>
-    <li>Optional client registry (<span class="mono">config.clients</span>) — lenient when empty</li>
+    <li>Token <strong>introspection</strong> (<span class="mono">/introspect</span>) and <strong>revocation</strong>
+        (<span class="mono">/revoke</span>) — RFC 7662 / 7009</li>
+    <li>Optional client registry (<span class="mono">config.clients</span>) — lenient when empty; enables
+        <span class="mono">redirect_uri</span> allowlisting</li>
   </ul>
 
   <h2>Token signing</h2>

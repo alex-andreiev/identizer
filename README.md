@@ -117,6 +117,12 @@ Identizer.configure do |config|
 end
 ```
 
+Other options (all have sane defaults): `code_ttl` / `access_token_ttl` /
+`refresh_token_ttl` (grant lifetimes), `clients` (registry that enables
+`redirect_uri` allowlisting), `saml_sign_response`, `saml_encrypt_assertion` +
+`saml_sp_certificate`, `saml_allowed_acs`, `saml_attribute_names`, `ldap_port` /
+`ldaps_port`, and `request_logging`. See `lib/identizer/configuration.rb`.
+
 ### Identity store interface
 
 Any object responding to this duck-typed interface can be a directory:
@@ -152,16 +158,22 @@ config.identity_store = Identizer::IdentityStore::SqliteStore.new(path: "dev.sql
 
 ## Endpoints
 
+Most clients only need the issuer/metadata URL; the rest is discovered. Okta-style
+`/oauth2/v1/*` aliases exist for the OIDC routes (authorize/token/userinfo/keys).
+
 | Purpose | Route |
 |---|---|
 | Dashboard / config | `GET /` |
+| Health | `GET /healthz` |
 | Login form | `GET /login`, `/authorize`, `/v1/authorize` |
 | Cognito hosted-UI token | `POST /oauth2/token` |
 | Auth0 token + profile | `POST /oauth/token`, `GET /userinfo` |
-| OIDC token | `POST /v1/token` |
+| OIDC token / logout | `POST /v1/token`, `GET /v1/logout` |
+| OIDC introspection / revocation | `POST /introspect`, `POST /revoke` |
 | OIDC discovery / JWKS | `GET /.well-known/openid-configuration`, `/.well-known/jwks.json` |
-| SAML metadata | `GET /metadata` |
+| SAML metadata / SSO | `GET /metadata`, `GET|POST /saml/sso` |
 | Cognito management API | `POST /` with `x-amz-target` (point `COGNITO_ENDPOINT` here) |
+| Auth0 Management API | `POST/DELETE /api/v2/clients`, `/api/v2/connections` |
 
 ## LDAP listener (optional)
 

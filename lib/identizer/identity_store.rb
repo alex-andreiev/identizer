@@ -53,11 +53,6 @@ module Identizer
         write(current_hashes.reject { |hash| hash["mail"] == email })
       end
 
-      # Bulk replace with plain emails (one per line), dropping other attributes.
-      def replace_emails(emails)
-        write(Array(emails).map { |email| { "mail" => email } })
-      end
-
       private
 
       def current_hashes

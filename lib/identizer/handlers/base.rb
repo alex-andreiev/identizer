@@ -13,7 +13,7 @@ module Identizer
         @config = context.config
         @store = context.store
         @minter = context.minter
-        @sessions = context.sessions
+        @codes = context.codes
         @refresh_tokens = context.refresh_tokens
         @access_tokens = context.access_tokens
         @renderer = context.renderer
@@ -21,7 +21,7 @@ module Identizer
 
       private
 
-      attr_reader :config, :store, :minter, :sessions, :refresh_tokens, :access_tokens, :renderer
+      attr_reader :config, :store, :minter, :codes, :refresh_tokens, :access_tokens, :renderer
 
       # Render a web-admin page through the shared layout.
       def page(template, request, nav:, title:, **locals)
@@ -29,7 +29,7 @@ module Identizer
       end
 
       def consume(code)
-        sessions.take(code)
+        codes.take(code)
       end
 
       # Consume a one-time authorization code and enforce PKCE when a challenge

@@ -50,13 +50,6 @@ module Identizer
         @db.execute("DELETE FROM entries WHERE mail = ?", [email.to_s.strip])
       end
 
-      def replace_emails(emails)
-        @db.transaction do
-          @db.execute("DELETE FROM entries")
-          Array(emails).each { |email| upsert("mail" => email) }
-        end
-      end
-
       private
 
       def seed_if_empty(seed)

@@ -3,17 +3,23 @@
 module Identizer
   # A small thread-safe, TTL'd key -> value store for the short-lived grants the
   # provider issues (authorization codes, access tokens, refresh tokens). Entries
-  # expire and are pruned lazily on access, so the maps don't grow without bound
-  # and the advertised lifetimes are actually enforced. Uses a monotonic clock so
-  # it's immune to wall-clock changes.
+  # expire and are pruned lazily on access, plus an opportunistic sweep once the
+  # store grows, so even never-redeemed grants don't accumulate without bound. The
+  # advertised lifetimes are enforced. Uses a monotonic clock (immune to wall-clock
+  # changes).
   class GrantStore
+    SWEEP_THRESHOLD = 1000
+
     def initialize
       @entries = {}
       @mutex = Mutex.new
     end
 
     def put(key, value, ttl:)
-      @mutex.synchronize { @entries[key] = [value, monotonic + ttl] }
+      @mutex.synchronize do
+        sweep if @entries.size >= SWEEP_THRESHOLD
+        @entries[key] = [value, monotonic + ttl]
+      end
       value
     end
 
@@ -46,6 +52,11 @@ module Identizer
 
       @entries.delete(key)
       nil
+    end
+
+    def sweep
+      now = monotonic
+      @entries.delete_if { |_, (_, expires_at)| now >= expires_at }
     end
 
     def monotonic

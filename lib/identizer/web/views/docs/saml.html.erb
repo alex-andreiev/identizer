@@ -9,6 +9,10 @@
 SSO URL        <%= h(config.base_url) %>/saml/sso   (HTTP-Redirect &amp; HTTP-POST)</pre>
   <p>The metadata embeds the IdP signing certificate, so your SP can validate signatures.</p>
 
+  <p class="muted"><strong>Heads up:</strong> by default any ACS is accepted (dev convenience), so a signed
+     assertion will be POSTed wherever the request says. Set
+     <span class="mono">config.saml_allowed_acs = ["https://your-app/acs"]</span> to lock it down.</p>
+
   <h2>SP-initiated</h2>
   <p>Send an <span class="mono">AuthnRequest</span> to the SSO URL (redirect or POST binding). Identizer
      reads the <span class="mono">AssertionConsumerServiceURL</span> and request <span class="mono">ID</span>,

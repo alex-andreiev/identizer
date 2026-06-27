@@ -5,6 +5,13 @@ module Identizer
     # CRUD over the LDAP-flavoured user directory. Requires a store exposing the
     # management interface (#entries, #upsert, #delete) — the default does.
     class Directory < Base
+      # Reserved/standard names a custom attribute must not set — otherwise it
+      # could overwrite a form field or forge a registered token claim.
+      BLOCKED_ATTRIBUTES = (
+        DirectoryEntry::EDITABLE_ATTRIBUTES +
+        %w[iss aud exp iat nbf jti nonce sub email given_name family_name name groups preferred_username dn]
+      ).map(&:downcase).freeze
+
       def index(request)
         editing = request.params["edit"]
         page("directory/index", request, nav: :directory, title: "Directory",
@@ -59,7 +66,9 @@ module Identizer
           next if key.nil? || value.nil?
 
           name = key.strip
-          acc[name] = value.strip unless name.empty? || value.strip.empty?
+          next if name.empty? || value.strip.empty? || BLOCKED_ATTRIBUTES.include?(name.downcase)
+
+          acc[name] = value.strip
         end
       end
     end

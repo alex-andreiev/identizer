@@ -4,7 +4,7 @@ module Identizer
   # What an issued code/refresh token stands for: the signed-in identity plus the
   # authorization-request parameters needed at token time (PKCE, scope, nonce).
   Authorization = Struct.new(:identity, :code_challenge, :code_challenge_method, :scope, :nonce, :client_id,
-                             keyword_init: true) do
+                             :access_token, :refresh_token, keyword_init: true) do
     # RFC 7636 PKCE check. No challenge issued -> nothing to verify.
     def pkce_valid?(verifier)
       return true if code_challenge.to_s.empty?

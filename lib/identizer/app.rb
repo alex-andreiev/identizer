@@ -8,7 +8,7 @@ module Identizer
   class App
     include Responses
 
-    Context = Struct.new(:config, :store, :minter, :sessions, :refresh_tokens, :access_tokens, :renderer)
+    Context = Struct.new(:config, :store, :minter, :codes, :refresh_tokens, :access_tokens, :renderer)
 
     def initialize(config = Identizer.configuration)
       @config = config

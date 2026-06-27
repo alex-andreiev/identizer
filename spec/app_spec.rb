@@ -60,6 +60,15 @@ RSpec.describe Identizer::App do
       expect(entry.to_identity.to_h).to include("custom_1" => "42", "department" => "Eng")
     end
 
+    it "ignores reserved/standard names in custom attributes (no claim forging)" do
+      post "/directory", mail: "x@example.com", givenName: "X",
+                         custom_attributes: "aud = evil\nexp = 1\nsub = admin\ndepartment = ok"
+      claims = config.identity_store.entries.find { |e| e.mail == "x@example.com" }.to_identity.to_h
+      expect(claims).to include("department" => "ok")
+      expect(claims).not_to include("aud", "exp")
+      expect(claims["sub"]).to start_with("uid=") # the real DN, not "admin"
+    end
+
     it "deletes a directory entry" do
       post "/directory/delete", mail: "alice@example.com"
       expect(last_response.status).to eq(302)
@@ -252,6 +261,23 @@ RSpec.describe Identizer::App do
       post "/v1/token", grant_type: "refresh_token", refresh_token: "nope"
       expect(last_response.status).to eq(400)
     end
+
+    it "advertises expires_in matching the configured access_token_ttl" do
+      config.access_token_ttl = 1234
+      code = authorize.fetch("code")
+      post "/v1/token", code: code
+      expect(JSON.parse(last_response.body)).to include("expires_in" => 1234)
+    end
+
+    it "revoking an access token also invalidates the paired refresh token" do
+      code = authorize.fetch("code")
+      post "/v1/token", code: code
+      body = JSON.parse(last_response.body)
+
+      post "/revoke", token: body.fetch("access_token")
+      post "/v1/token", grant_type: "refresh_token", refresh_token: body.fetch("refresh_token")
+      expect(last_response.status).to eq(400)
+    end
   end
 
   describe "OIDC: scope + nonce" do
@@ -282,6 +308,13 @@ RSpec.describe Identizer::App do
       expect(last_response.status).to eq(200)
       expect(last_response.body).to include("Signed out")
     end
+
+    it "blocks an unregistered post_logout_redirect_uri when clients are configured" do
+      config.clients = [{ client_id: "web", post_logout_redirect_uris: ["https://app.test/bye"] }]
+      get "/v1/logout", post_logout_redirect_uri: "https://evil.test/bye", client_id: "web"
+      expect(last_response.status).to eq(200)
+      expect(last_response.body).to include("not registered")
+    end
   end
 
   describe "OIDC: client registry" do
@@ -305,6 +338,14 @@ RSpec.describe Identizer::App do
       get "/__select", redirect_uri: "https://evil.test/grab", state: "s",
                        email: "alice@example.com", password: "password", client_id: "web"
       expect(last_response.status).to eq(200)
+      expect(last_response.body).to include("Sign-in blocked")
+      expect(last_response.headers["location"]).to be_nil
+    end
+
+    it "blocks the redirect_uri even on the wrong-password error path" do
+      config.clients = [{ client_id: "web", redirect_uris: ["https://app.test/cb"] }]
+      get "/__select", redirect_uri: "https://evil.test/grab", state: "s",
+                       email: "alice@example.com", password: "WRONG", client_id: "web"
       expect(last_response.body).to include("Sign-in blocked")
       expect(last_response.headers["location"]).to be_nil
     end

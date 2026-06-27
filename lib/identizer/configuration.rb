@@ -20,7 +20,10 @@ module Identizer
       @ldap_port = optional_int_env("IDENTIZER_LDAP_PORT") # nil = LDAP listener off
       @ldaps_port = optional_int_env("IDENTIZER_LDAPS_PORT") # nil = LDAPS listener off
       @seed_identities = []
-      @clients = [] # optional OAuth client registry: [{ client_id:, client_secret:, redirect_uris: }]
+      # Optional client registry: [{ client_id:, redirect_uris:, post_logout_redirect_uris: }].
+      # A client_secret may be present but is NOT verified (dev tool). Separate from
+      # the apps provisioned at runtime via the Auth0 Management API.
+      @clients = []
       @saml_allowed_acs = [] # optional allowlist of SAML ACS URLs ([] = allow any, dev default)
       @saml_sign_response = true # sign the SAML Response in addition to the Assertion
       @saml_encrypt_assertion = false # encrypt the assertion when an SP certificate is set
@@ -119,6 +122,17 @@ module Identizer
 
       allowed = Array(client[:redirect_uris])
       allowed.empty? || allowed.include?(redirect_uri)
+    end
+
+    # RP-initiated-logout guard, mirroring redirect_uri_allowed?.
+    def post_logout_redirect_allowed?(client_id, uri)
+      return true if clients.empty?
+
+      client = clients.find { |entry| entry[:client_id] == client_id }
+      return false unless client
+
+      allowed = Array(client[:post_logout_redirect_uris])
+      allowed.empty? || allowed.include?(uri)
     end
 
     # SAML ACS guard. Lenient until an allowlist is configured.

@@ -18,17 +18,20 @@ RSpec.describe Identizer::IdentityStore::ConfigStore do
     expect(store.emails).to eq(["seed@example.com"])
   end
 
-  it "persists and reads back emails edited through the dashboard" do
+  it "persists and reads back upserted entries" do
     store = described_class.new(path: path)
-    store.replace_emails(["a@example.com", "b@example.com"])
+    store.upsert("mail" => "a@example.com")
+    store.upsert("mail" => "b@example.com")
 
     expect(described_class.new(path: path).emails).to eq(["a@example.com", "b@example.com"])
   end
 
-  it "prefers persisted identities over the seed" do
-    store = described_class.new(path: path, seed: [{ email: "seed@example.com" }])
-    store.replace_emails(["real@example.com"])
-    expect(store.emails).to eq(["real@example.com"])
+  it "prefers persisted identities over the seed once the file has entries" do
+    described_class.new(path: path, seed: [{ email: "seed@example.com" }]).upsert("mail" => "real@example.com")
+
+    reopened = described_class.new(path: path, seed: [{ email: "ignored@example.com" }])
+    expect(reopened.emails).to include("real@example.com")
+    expect(reopened.emails).not_to include("ignored@example.com")
   end
 
   it "reads the legacy {emails: [...]} file shape" do

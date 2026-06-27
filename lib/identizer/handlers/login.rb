@@ -22,6 +22,12 @@ module Identizer
         redirect_uri = request.params["redirect_uri"].to_s
         state = request.params["state"].to_s
 
+        # Validate the redirect target FIRST — never bounce to an unregistered URI,
+        # not even on the error paths below (that would be the open redirect).
+        unless config.redirect_uri_allowed?(request.params["client_id"], redirect_uri)
+          return html(invalid_redirect_page(redirect_uri))
+        end
+
         unless password == config.shared_password
           return error_redirect(redirect_uri, state, "access_denied", "Invalid credentials")
         end
@@ -30,12 +36,8 @@ module Identizer
           return error_redirect(redirect_uri, state, "access_denied", "Unknown user: #{email}")
         end
 
-        unless config.redirect_uri_allowed?(request.params["client_id"], redirect_uri)
-          return html(invalid_redirect_page(redirect_uri))
-        end
-
         code = SecureRandom.hex(20)
-        sessions.put(code, authorization_for(request, email), ttl: config.code_ttl)
+        codes.put(code, authorization_for(request, email), ttl: config.code_ttl)
         auth_redirect(redirect_uri, state, code: code)
       end
 

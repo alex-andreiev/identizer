@@ -33,6 +33,17 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - SAML `SAMLRequest` size + inflate guards (deflate-bomb protection).
 - Auth0 management registry mutations are mutex-guarded.
 
+### Security / correctness (code review, round 2)
+- Validate `redirect_uri` before any redirect (including the error paths) and add
+  a `post_logout_redirect_uri` allowlist — closing two open-redirect gaps.
+- Registered JWT claims (iss/aud/exp/iat/nonce) always win over identity claims,
+  and reserved/standard names are blocked in the directory custom-attributes field,
+  so a directory entry can't forge token claims.
+- `revoke` now invalidates the paired access+refresh token; introspection covers
+  refresh tokens; `expires_in` tracks `access_token_ttl`.
+- GrantStore sweeps expired entries opportunistically (abandoned grants no longer
+  accumulate). Removed the dead `replace_emails`; renamed the codes store.
+
 ### Security / correctness (code review)
 - Enforce PKCE uniformly across all token endpoints (a code can no longer be
   redeemed at a different endpoint to skip the check).

@@ -24,16 +24,18 @@ module Identizer
 
     def payload(identity, nonce: nil, audience: nil)
       now = Time.now.to_i
-      claims = {
+      registered = {
         "iss" => @config.issuer,
         # Audience is the requesting client_id when known, so OIDC clients that
         # validate `aud == client_id` accept the token; falls back to a constant.
         "aud" => audience.to_s.empty? ? "identizer" : audience,
         "iat" => now,
-        "exp" => now + 3600
+        "exp" => now + 3600 # id_token lifetime (intentionally separate from access_token_ttl)
       }
-      claims["nonce"] = nonce unless nonce.to_s.empty?
-      claims.merge(identity.to_h)
+      registered["nonce"] = nonce unless nonce.to_s.empty?
+      # Registered claims always win over identity-derived ones, so a directory
+      # attribute can never forge iss/aud/exp/iat/nonce.
+      identity.to_h.merge(registered)
     end
 
     def jwks
