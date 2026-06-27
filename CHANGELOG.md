@@ -6,6 +6,19 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Security / correctness (code review)
+- Enforce PKCE uniformly across all token endpoints (a code can no longer be
+  redeemed at a different endpoint to skip the check).
+- Auth0 flow now consumes the one-time code and returns a distinct access_token
+  (no more unlimited replay / code-as-permanent-token).
+- Private keys (RS256, SAML, TLS) are written with `0600` permissions.
+- id_token `aud` is the requesting `client_id` (falls back to a constant).
+- Friendly error for non-numeric port env vars; the 500 handler logs the
+  backtrace to the server console instead of silently swallowing it.
+
+### Fixed
+- Renaming a directory entry's email no longer leaves a duplicate row.
+
 ### Added
 - Initial release: a local identity provider for developing and testing auth/SSO
   integrations, extracted and decoupled from the tap-v3 SSO emulator.

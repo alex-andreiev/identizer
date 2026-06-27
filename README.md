@@ -124,8 +124,11 @@ Any object responding to this duck-typed interface can be a directory:
 ```
 #emails              -> Array<String>   addresses the login form accepts
 #identity_for(email) -> Identity | nil  resolve an address to an Identity
-#replace_emails(...) -> (optional)       lets the dashboard edit the directory
 ```
+
+For full management through the web admin, a store also exposes the directory
+interface `#entries`, `#upsert(attrs)` and `#delete(email)` (the bundled
+`ConfigStore` and `SqliteStore` do).
 
 The default `Identizer::IdentityStore::ConfigStore` persists identities to a JSON
 file the dashboard writes, seeded from `config.seed_identities`.

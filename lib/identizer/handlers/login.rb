@@ -7,7 +7,7 @@ module Identizer
     # code and redirects back to the app.
     class Login < Base
       # The authorization-request parameters that must survive the login form.
-      CARRIED_PARAMS = %w[redirect_uri state scope nonce code_challenge code_challenge_method].freeze
+      CARRIED_PARAMS = %w[redirect_uri state scope nonce code_challenge code_challenge_method client_id].freeze
 
       def form(request)
         emails = store.emails
@@ -43,7 +43,8 @@ module Identizer
           code_challenge: request.params["code_challenge"],
           code_challenge_method: request.params["code_challenge_method"],
           scope: request.params["scope"],
-          nonce: request.params["nonce"]
+          nonce: request.params["nonce"],
+          client_id: request.params["client_id"]
         )
       end
 

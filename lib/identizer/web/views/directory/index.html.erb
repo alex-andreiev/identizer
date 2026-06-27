@@ -37,6 +37,7 @@
 
 <h2><%= editing ? "Edit entry" : "Add entry" %></h2>
 <form class="card" method="post" action="<%= prefix %>/directory">
+  <% if editing %><input type="hidden" name="original_mail" value="<%= h(entry.mail) %>"><% end %>
   <div class="row">
     <div><label>mail (login email)</label>
       <input type="email" name="mail" required value="<%= h(editing ? entry.mail : "") %>"></div>

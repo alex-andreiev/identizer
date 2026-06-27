@@ -29,8 +29,8 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "jwt", ">= 2.0", "< 4"
-  spec.add_dependency "net-ldap", "~> 0.19"   # only loaded when the LDAP listener is used
-  spec.add_dependency "nokogiri", "~> 1.15"   # only loaded when signing SAML assertions
+  spec.add_dependency "net-ldap", "~> 0.19"   # required by the LDAP listener (loaded lazily)
+  spec.add_dependency "nokogiri", "~> 1.15"   # required for SAML signing (loaded lazily)
   spec.add_dependency "rack", ">= 2.2", "< 4"
   spec.add_dependency "webrick", "~> 1.7"
 

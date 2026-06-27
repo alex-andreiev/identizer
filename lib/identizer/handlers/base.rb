@@ -32,6 +32,18 @@ module Identizer
         sessions.delete(code)
       end
 
+      # Consume a one-time authorization code and enforce PKCE when a challenge
+      # was issued — uniformly, so a code can't be redeemed at a different token
+      # endpoint to skip the check. Returns the Authorization, or nil if the code
+      # is unknown or PKCE verification fails.
+      def redeem_code(request)
+        authorization = consume(code_param(request))
+        return nil if authorization.nil?
+        return nil unless authorization.pkce_valid?(request.params["code_verifier"])
+
+        authorization
+      end
+
       def code_param(request)
         if json_request?(request)
           parse_json(request)["code"]

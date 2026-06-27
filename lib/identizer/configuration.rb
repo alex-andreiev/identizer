@@ -10,7 +10,7 @@ module Identizer
 
     def initialize
       @host = "127.0.0.1"
-      @port = Integer(ENV.fetch("IDENTIZER_PORT", ENV.fetch("SSO_MOCK_PORT", "9999")))
+      @port = int_env("IDENTIZER_PORT", "SSO_MOCK_PORT", default: 9999)
       @tls_cert_path = env_presence("IDENTIZER_TLS_CERT", "SSO_MOCK_TLS_CERT")
       @tls_key_path = env_presence("IDENTIZER_TLS_KEY", "SSO_MOCK_TLS_KEY")
       @config_dir = ENV.fetch("IDENTIZER_CONFIG_DIR", File.join(Dir.pwd, "tmp", "identizer"))
@@ -164,8 +164,21 @@ module Identizer
     end
 
     def optional_int_env(key)
-      value = env_presence(key)
-      value && Integer(value)
+      raw = env_presence(key)
+      return nil if raw.nil?
+
+      Integer(raw)
+    rescue ArgumentError
+      raise ArgumentError, "#{key} must be an integer (got #{raw.inspect})"
+    end
+
+    def int_env(*keys, default:)
+      raw = env_presence(*keys)
+      return default if raw.nil?
+
+      Integer(raw)
+    rescue ArgumentError
+      raise ArgumentError, "#{keys.first} must be an integer (got #{raw.inspect})"
     end
   end
 end

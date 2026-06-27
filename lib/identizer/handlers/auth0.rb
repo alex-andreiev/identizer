@@ -7,18 +7,18 @@ module Identizer
     # and a certificate is configured), then the profile is fetched at /userinfo.
     class Auth0 < Base
       def token(request)
-        params = merged_params(request)
-
         # The Management API authenticates with a client_credentials grant.
-        if params["grant_type"] == "client_credentials"
+        if merged_params(request)["grant_type"] == "client_credentials"
           return json(200, { access_token: SecureRandom.hex(32), token_type: "Bearer", expires_in: 86_400 })
         end
 
-        code = params["code"]
-        return json(400, { error: "invalid_grant" }) if sessions[code].nil?
+        authorization = redeem_code(request) # single-use code, PKCE-checked
+        return json(400, { error: "invalid_grant" }) if authorization.nil?
 
-        # The access_token IS the code; /userinfo resolves it to the profile.
-        json(200, { access_token: code, token_type: "Bearer" })
+        # Mint a distinct access_token that /userinfo resolves to the profile.
+        access_token = SecureRandom.hex(20)
+        access_tokens[access_token] = authorization
+        json(200, { access_token: access_token, token_type: "Bearer" })
       end
 
       def userinfo(request)

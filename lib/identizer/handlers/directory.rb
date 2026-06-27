@@ -14,7 +14,12 @@ module Identizer
       end
 
       def create(request)
-        store.upsert(entry_params(request))
+        attributes = entry_params(request)
+        # On rename (mail changed while editing), drop the old row so we don't
+        # leave a duplicate behind.
+        original = request.params["original_mail"].to_s
+        store.delete(original) if !original.empty? && original != attributes["mail"]
+        store.upsert(attributes)
         redirect("#{request.script_name}/directory")
       end
 

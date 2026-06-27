@@ -35,6 +35,9 @@ module Identizer
         route(request)
       end
     rescue StandardError => e
+      # Surface the failure to the console (this is a local dev tool) instead of
+      # silently swallowing it; still return a JSON 500 to the client.
+      env["rack.errors"]&.puts("[identizer] #{e.class}: #{e.message}\n  #{e.backtrace&.first(8)&.join("\n  ")}")
       json(500, { error: e.message })
     end
 

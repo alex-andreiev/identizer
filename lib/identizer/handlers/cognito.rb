@@ -17,10 +17,11 @@ module Identizer
 
       # Cognito hosted-UI code exchange.
       def token(request)
-        authorization = consume(code_param(request))
+        authorization = redeem_code(request)
         return json(400, { error: "invalid_grant" }) if authorization.nil?
 
-        json(200, { id_token: minter.id_token(authorization.identity), token_type: "Bearer" })
+        id_token = minter.id_token(authorization.identity, audience: authorization.client_id)
+        json(200, { id_token: id_token, token_type: "Bearer" })
       end
 
       private

@@ -27,6 +27,12 @@ RSpec.describe Identizer::TLS do
     expect(File.exist?(File.join(@dir, "key.pem"))).to be(true)
   end
 
+  it "writes the private key with owner-only (0600) permissions" do
+    described_class.resolve(config)
+    mode = File.stat(File.join(@dir, "key.pem")).mode & 0o777
+    expect(mode).to eq(0o600)
+  end
+
   it "covers a custom url_host in the certificate SAN" do
     cert, = described_class.resolve(config(url_host: "myco.okta.local"))
     san = cert.extensions.find { |ext| ext.oid == "subjectAltName" }.to_s

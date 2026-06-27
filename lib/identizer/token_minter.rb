@@ -13,8 +13,8 @@ module Identizer
       @config = config
     end
 
-    def id_token(identity, nonce: nil)
-      payload = payload(identity, nonce: nonce)
+    def id_token(identity, nonce: nil, audience: nil)
+      payload = payload(identity, nonce: nonce, audience: audience)
       if @config.rs256?
         JWT.encode(payload, rsa_key, "RS256", { kid: jwk.kid })
       else
@@ -22,11 +22,13 @@ module Identizer
       end
     end
 
-    def payload(identity, nonce: nil)
+    def payload(identity, nonce: nil, audience: nil)
       now = Time.now.to_i
       claims = {
         "iss" => @config.issuer,
-        "aud" => "identizer",
+        # Audience is the requesting client_id when known, so OIDC clients that
+        # validate `aud == client_id` accept the token; falls back to a constant.
+        "aud" => audience.to_s.empty? ? "identizer" : audience,
         "iat" => now,
         "exp" => now + 3600
       }
@@ -76,6 +78,7 @@ module Identizer
       key = OpenSSL::PKey::RSA.new(2048)
       FileUtils.mkdir_p(@config.config_dir)
       File.write(path, key.to_pem)
+      File.chmod(0o600, path)
       key
     end
   end

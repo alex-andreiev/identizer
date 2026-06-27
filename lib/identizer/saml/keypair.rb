@@ -18,6 +18,7 @@ module Identizer
         certificate = self_signed(key)
         FileUtils.mkdir_p(config_dir)
         File.write(key_path, key.to_pem)
+        File.chmod(0o600, key_path)
         File.write(cert_path, certificate.to_pem)
         new(key, certificate)
       end

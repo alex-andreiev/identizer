@@ -36,12 +36,8 @@ module Identizer
       def authorization_code(request)
         return json(401, { error: "invalid_client" }) unless valid_client?(request)
 
-        authorization = consume(code_param(request))
-        return json(400, { error: "invalid_grant" }) if authorization.nil?
-
-        unless authorization.pkce_valid?(request.params["code_verifier"])
-          return json(400, { error: "invalid_grant", error_description: "PKCE verification failed" })
-        end
+        authorization = redeem_code(request)
+        return json(400, { error: "invalid_grant", error_description: "bad code or PKCE" }) if authorization.nil?
 
         issue(authorization)
       end
@@ -61,7 +57,8 @@ module Identizer
 
         body = {
           access_token: access_token,
-          id_token: minter.id_token(authorization.identity, nonce: authorization.nonce),
+          id_token: minter.id_token(authorization.identity, nonce: authorization.nonce,
+                                                            audience: authorization.client_id),
           token_type: "Bearer",
           expires_in: 3600,
           refresh_token: refresh_token

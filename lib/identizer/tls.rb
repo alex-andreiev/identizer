@@ -42,8 +42,10 @@ module Identizer
 
       FileUtils.mkdir_p(config.config_dir)
       cert_path = File.join(config.config_dir, "cert.pem")
+      key_path = File.join(config.config_dir, "key.pem")
       File.write(cert_path, cert.to_pem)
-      File.write(File.join(config.config_dir, "key.pem"), key.to_pem)
+      File.write(key_path, key.to_pem)
+      File.chmod(0o600, key_path)
 
       [cert, key, cert_path]
     end

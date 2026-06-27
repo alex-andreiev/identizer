@@ -60,6 +60,11 @@ RSpec.describe Identizer::App do
       expect(config.identity_store.emails).to eq([])
     end
 
+    it "renames an entry without leaving a duplicate" do
+      post "/directory", mail: "new-alice@example.com", original_mail: "alice@example.com", givenName: "Alice"
+      expect(config.identity_store.emails).to eq(["new-alice@example.com"])
+    end
+
     it "edits settings and persists them" do
       post "/settings", shared_password: "hunter2", signing: "rs256"
       expect(last_response.status).to eq(302)
@@ -136,15 +141,23 @@ RSpec.describe Identizer::App do
   end
 
   describe "Auth0 flow (/oauth/token + /userinfo)" do
-    it "returns the code as access_token and resolves the profile" do
+    it "exchanges the code for a distinct access_token and resolves the profile" do
       code = authorize.fetch("code")
       post "/oauth/token", code: code
-      expect(JSON.parse(last_response.body)).to include("access_token" => code)
+      token = JSON.parse(last_response.body).fetch("access_token")
+      expect(token).not_to eq(code) # not the raw code anymore
 
-      header "Authorization", "Bearer #{code}"
+      header "Authorization", "Bearer #{token}"
       get "/userinfo"
       expect(last_response.status).to eq(200)
       expect(JSON.parse(last_response.body)).to include("email" => "alice@example.com")
+    end
+
+    it "makes the authorization code single-use" do
+      code = authorize.fetch("code")
+      post "/oauth/token", code: code
+      post "/oauth/token", code: code
+      expect(last_response.status).to eq(400)
     end
 
     it "rejects userinfo without a valid token" do
@@ -193,6 +206,24 @@ RSpec.describe Identizer::App do
 
       expect(last_response.status).to eq(400)
       expect(JSON.parse(last_response.body)).to include("error" => "invalid_grant")
+    end
+
+    it "enforces PKCE even when the code is redeemed at another token endpoint" do
+      verifier = "this-is-a-sufficiently-long-code-verifier-123"
+      code = authorize(code_challenge: challenge_for(verifier), code_challenge_method: "S256").fetch("code")
+      # Redeem at the Cognito token endpoint with no verifier — must still fail.
+      post "/oauth2/token", code: code
+      expect(last_response.status).to eq(400)
+    end
+  end
+
+  describe "id_token audience" do
+    it "is set to the requesting client_id" do
+      code = authorize(client_id: "my-app").fetch("code")
+      post "/v1/token", code: code
+      id_token = JSON.parse(last_response.body).fetch("id_token")
+      payload, = JWT.decode(id_token, config.hs256_key, true, algorithm: "HS256")
+      expect(payload["aud"]).to eq("my-app")
     end
   end
 

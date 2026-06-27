@@ -23,6 +23,14 @@ RSpec.describe Identizer::Configuration do
     expect(config.ldap_base_dn).to eq("dc=identizer,dc=local")
   end
 
+  it "raises a clear error for a non-numeric IDENTIZER_PORT" do
+    original = ENV.fetch("IDENTIZER_PORT", nil)
+    ENV["IDENTIZER_PORT"] = "not-a-number"
+    expect { described_class.new }.to raise_error(ArgumentError, /IDENTIZER_PORT must be an integer/)
+  ensure
+    ENV["IDENTIZER_PORT"] = original
+  end
+
   it "builds a default ConfigStore seeded from seed_identities" do
     config.seed_identities = [{ email: "a@b.com" }]
     expect(config.identity_store.emails).to eq(["a@b.com"])
