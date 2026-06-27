@@ -36,6 +36,7 @@ Metrics/AbcSize:
     - "lib/identizer/server.rb"
     - "lib/identizer/tls.rb"
     - "lib/identizer/saml/keypair.rb"
+    - "lib/identizer/saml/encryptor.rb"
     - "spec/**/*"
 
 # The SAML builder threads many SAML-spec parameters through small helpers.
@@ -65,6 +66,7 @@ Metrics/ClassLength:
     - "lib/identizer/handlers/**/*"
     - "lib/identizer/configuration.rb"
     - "lib/identizer/ldap/server.rb"
+    - "lib/identizer/saml/response_builder.rb"
 
 Metrics/BlockLength:
   Exclude:

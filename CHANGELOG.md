@@ -7,6 +7,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added (follow-ups)
+- SAML EncryptedAssertion: encrypt the signed assertion (AES-256-CBC + RSA-OAEP)
+  under the SP's certificate (`saml_encrypt_assertion` + `saml_sp_certificate`),
+  for SPs that require encryption. Decryptable by standard SPs (ruby-saml).
 - Edit arbitrary custom attributes per directory entry in the web admin (so any
   provider-specific claim name can be set without code).
 - The SAML Response is signed in addition to the Assertion (configurable via

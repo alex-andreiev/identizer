@@ -22,6 +22,14 @@ SSO URL        <%= h(config.base_url) %>/saml/sso   (HTTP-Redirect &amp; HTTP-PO
   <p>The directory entry's attributes are sent as SAML <span class="mono">Attribute</span>s
      (<span class="mono">email, given_name, family_name, groups, ...</span>); the NameID is the email.</p>
 
+  <h2>Encrypted assertions</h2>
+  <p>For SPs that require an <span class="mono">EncryptedAssertion</span>, give Identizer the SP's certificate
+     and turn encryption on — the assertion is signed, then encrypted (AES-256-CBC + RSA-OAEP) under that cert:</p>
+  <pre>Identizer.configure do |c|
+  c.saml_encrypt_assertion = true
+  c.saml_sp_certificate = File.read("sp-cert.pem")
+end</pre>
+
   <h2>Note</h2>
   <p>Signing requires the <span class="mono">nokogiri</span> gem (a dependency, loaded only when a Response is
      produced). It is a development IdP — convenient, not hardened.</p>

@@ -13,4 +13,5 @@ end
 
 require_relative "saml/keypair"
 require_relative "saml/signer"
+require_relative "saml/encryptor"
 require_relative "saml/response_builder"

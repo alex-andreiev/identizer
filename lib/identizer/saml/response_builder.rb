@@ -28,6 +28,7 @@ module Identizer
         document = document_for(identity, acs_url, audience, in_response_to, now)
         signer = Signer.new(@keypair)
         signer.sign!(document.at_xpath("//saml:Assertion", "saml" => ASSERTION))
+        encrypt_assertion(document) if encrypt?
         signer.sign!(document.root) if @config.saml_sign_response # sign the Response too
         document.to_xml(save_with: Nokogiri::XML::Node::SaveOptions::AS_XML |
                                    Nokogiri::XML::Node::SaveOptions::NO_DECLARATION)
@@ -38,6 +39,15 @@ module Identizer
       end
 
       private
+
+      def encrypt?
+        @config.saml_encrypt_assertion && @config.saml_sp_certificate
+      end
+
+      def encrypt_assertion(document)
+        assertion = document.at_xpath("//saml:Assertion", "saml" => ASSERTION)
+        Encryptor.new(@config.saml_sp_certificate).encrypt!(assertion)
+      end
 
       def document_for(identity, acs_url, audience, in_response_to, now)
         response_id = "_#{SecureRandom.hex(16)}"

@@ -107,6 +107,29 @@ RSpec.describe "SAML IdP" do
     end
   end
 
+  describe "encrypted assertions" do
+    let(:sp_key) { OpenSSL::PKey::RSA.new(2048) }
+    let(:sp_cert) { Identizer::Saml::Keypair.self_signed(sp_key) }
+
+    it "encrypts the assertion under the SP cert so the SP can decrypt it" do
+      config.saml_encrypt_assertion = true
+      config.saml_sp_certificate = sp_cert
+
+      post "/saml/finish", email: "alice@example.com", password: "password", acs: acs, audience: audience
+      base64 = saml_response_from(last_response.body)
+      expect(Base64.decode64(base64)).to include("EncryptedAssertion")
+
+      sp_settings = settings
+      sp_settings.certificate = sp_cert.to_pem
+      sp_settings.private_key = sp_key.to_pem
+      response = OneLogin::RubySaml::Response.new(base64, settings: sp_settings)
+      response.soft = true
+
+      expect(response.is_valid?).to be(true)
+      expect(response.nameid).to eq("alice@example.com")
+    end
+  end
+
   describe "SP-initiated SSO" do
     def deflate(xml)
       stream = Zlib::Deflate.new(Zlib::DEFAULT_COMPRESSION, -Zlib::MAX_WBITS)
