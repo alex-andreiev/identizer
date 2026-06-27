@@ -23,7 +23,12 @@
   <p>Entries are projected to standard attributes: <span class="mono">uid, cn, sn, givenName, mail, ou,
      memberOf, objectClass</span>.</p>
 
+  <h2>LDAPS (TLS)</h2>
+  <pre>bundle exec identizer --port 9999 --ldaps-port 1636</pre>
+  <p>Adds an implicit-TLS listener reusing the same certificate as the HTTPS server (see
+     <a href="<%= prefix %>/docs/tls">TLS &amp; mkcert</a>). You can run plain LDAP and LDAPS together.</p>
+
   <h2>Scope</h2>
-  <p>This is a development listener (plain TCP, simple bind). It is not LDAPS/StartTLS and is not intended
-     for production directories.</p>
+  <p>A development listener (simple bind, no StartTLS extended operation). Not intended for production
+     directories.</p>
 </article>

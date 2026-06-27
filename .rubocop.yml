@@ -55,6 +55,7 @@ Metrics/ClassLength:
   Exclude:
     - "lib/identizer/handlers/**/*"
     - "lib/identizer/configuration.rb"
+    - "lib/identizer/ldap/server.rb"
 
 Metrics/BlockLength:
   Exclude:

@@ -30,10 +30,11 @@ module Identizer
     private
 
     def start_ldap(config)
-      return unless config.ldap_port
+      return unless config.ldap_port || config.ldaps_port
 
       require "identizer/ldap"
-      Thread.new { Ldap::Server.new(config).start }
+      Thread.new { Ldap::Server.new(config, port: config.ldap_port).start } if config.ldap_port
+      Thread.new { Ldap::Server.new(config, port: config.ldaps_port, tls: true).start } if config.ldaps_port
     end
 
     def parser(config)
@@ -53,6 +54,9 @@ module Identizer
         end
         opts.on("--rs256", "Sign id_tokens with RS256 + publish JWKS") { config.signing = :rs256 }
         opts.on("--ldap-port PORT", Integer, "Also start an LDAP listener on PORT") { |value| config.ldap_port = value }
+        opts.on("--ldaps-port PORT", Integer, "Also start an LDAPS (TLS) listener on PORT") do |value|
+          config.ldaps_port = value
+        end
         opts.on("--ldap-host HOST", "Bind address for the LDAP listener") { |value| config.ldap_host = value }
         opts.on("-v", "--version", "Print version") do
           puts Identizer::VERSION

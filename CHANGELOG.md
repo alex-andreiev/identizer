@@ -23,5 +23,6 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Optional LDAP listener (`--ldap-port`): simple bind authentication and subtree
   search (equality / presence / substring / `&` `|` `!` filters) over the same
   directory, projecting entries to standard LDAP attributes.
+- Optional LDAPS listener (`--ldaps-port`): implicit TLS reusing the HTTPS cert.
 
 [Unreleased]: https://github.com/alex-andreiev/identizer/commits/main

@@ -102,9 +102,11 @@ module Identizer
     end
 
     def ldap_banner_line
-      return "" unless @config.ldap_port
-
-      "LDAP listener: ldap://#{@config.ldap_host || @config.host}:#{@config.ldap_port}\n"
+      host = @config.ldap_host || @config.host
+      lines = []
+      lines << "LDAP listener:  ldap://#{host}:#{@config.ldap_port}" if @config.ldap_port
+      lines << "LDAPS listener: ldaps://#{host}:#{@config.ldaps_port}" if @config.ldaps_port
+      lines.empty? ? "" : "#{lines.join("\n")}\n"
     end
   end
 end

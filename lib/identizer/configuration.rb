@@ -6,7 +6,7 @@ module Identizer
   class Configuration
     attr_accessor :host, :port, :tls_cert_path, :tls_key_path, :config_dir,
                   :shared_password, :signing, :hs256_key, :scheme, :url_host, :ldap_base_dn,
-                  :ldap_host, :ldap_port
+                  :ldap_host, :ldap_port, :ldaps_port
     attr_writer :identity_store, :base_url, :issuer, :seed_identities, :providers
 
     def initialize
@@ -23,6 +23,7 @@ module Identizer
       @ldap_base_dn = "dc=identizer,dc=local"
       @ldap_host = nil
       @ldap_port = optional_int_env("IDENTIZER_LDAP_PORT") # nil = LDAP listener off
+      @ldaps_port = optional_int_env("IDENTIZER_LDAPS_PORT") # nil = LDAPS listener off
       @seed_identities = []
       @clients = [] # optional OAuth client registry: [{ client_id:, client_secret:, redirect_uris: }]
     end

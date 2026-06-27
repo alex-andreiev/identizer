@@ -19,10 +19,11 @@ module Identizer
 
       PROTOCOL_ERROR = 2
 
-      def initialize(config, host: nil, port: nil)
+      def initialize(config, host: nil, port: nil, tls: false)
         @config = config
         @host = host || config.ldap_host || config.host
         @port = port || config.ldap_port || 1389
+        @tls = tls
         @handler = Handler.new(config)
       end
 
@@ -30,6 +31,7 @@ module Identizer
 
       def start
         @socket = TCPServer.new(@host, @port)
+        @ssl_context = build_ssl_context if @tls
         @running = true
         accept_loop
       end
@@ -45,20 +47,43 @@ module Identizer
 
       def accept_loop
         while @running
+          # accept returns nil when the socket is closed by stop (then @running is
+          # false and the loop exits) or when a TLS handshake fails (skip, keep serving).
           client = accept
-          break unless client
+          next unless client
 
           Thread.new(client) { |connection| serve(connection) }
         end
       end
 
       def accept
-        @socket.accept
+        client = @socket.accept
+        @tls ? wrap_tls(client) : client
       rescue IOError, Errno::EBADF
         nil
       end
 
+      def wrap_tls(client)
+        ssl = OpenSSL::SSL::SSLSocket.new(client, @ssl_context)
+        ssl.sync_close = true
+        ssl.accept
+        ssl
+      rescue OpenSSL::SSL::SSLError, IOError
+        client.close
+        nil
+      end
+
+      def build_ssl_context
+        cert, key, = TLS.resolve(@config)
+        context = OpenSSL::SSL::SSLContext.new
+        context.cert = cert
+        context.key = key
+        context
+      end
+
       def serve(connection)
+        # Net::BER's read_ber is mixed into IO/StringIO; an SSLSocket needs it added.
+        connection.extend(Net::BER::BERParser) unless connection.respond_to?(:read_ber)
         while (pdu = connection.read_ber(Net::LDAP::AsnSyntax))
           message_id = pdu[0]
           operation = pdu[1]
