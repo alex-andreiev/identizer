@@ -4,10 +4,6 @@ module Identizer
   # Everything the provider needs to run, with sensible dev defaults. Replaces
   # the Rails.* / ENV reads of the original emulator with one explicit object.
   class Configuration
-    attr_accessor :host, :port, :tls_cert_path, :tls_key_path, :config_dir,
-                  :shared_password, :signing, :hs256_key, :scheme, :url_host, :ldap_base_dn,
-                  :ldap_host, :ldap_port, :ldaps_port
-
     def initialize
       @host = "127.0.0.1"
       @port = int_env("IDENTIZER_PORT", "SSO_MOCK_PORT", default: 9999)
@@ -32,7 +28,11 @@ module Identizer
       @code_ttl = 600
       @access_token_ttl = 3600
       @refresh_token_ttl = 86_400
+      @request_logging = true # standalone server logs a concise request line
     end
+
+    attr_accessor :host, :port, :tls_cert_path, :tls_key_path, :config_dir, :shared_password, :signing, :hs256_key,
+                  :scheme, :url_host, :ldap_base_dn, :ldap_host, :ldap_port, :ldaps_port, :request_logging
 
     # Grant lifetimes (seconds), enforced by the GrantStore.
     attr_accessor :code_ttl, :access_token_ttl, :refresh_token_ttl, :saml_allowed_acs,

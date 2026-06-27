@@ -75,6 +75,7 @@ module Identizer
         end
         opts.on("--rs256", "Sign id_tokens with RS256 + publish JWKS") { config.signing = :rs256 }
         opts.on("--no-demo", "Don't seed the demo user on first run") { @demo = false }
+        opts.on("--quiet", "Don't log requests") { config.request_logging = false }
         opts.on("--ldap-port PORT", Integer, "Also start an LDAP listener on PORT") { |value| config.ldap_port = value }
         opts.on("--ldaps-port PORT", Integer, "Also start an LDAPS (TLS) listener on PORT") do |value|
           config.ldaps_port = value

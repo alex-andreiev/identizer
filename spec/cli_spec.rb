@@ -36,6 +36,10 @@ RSpec.describe Identizer::CLI do
     expect(result.seed_identities).to be_empty
   end
 
+  it "disables request logging with --quiet" do
+    expect(described_class.new(["--quiet"]).configure(config).request_logging).to be(false)
+  end
+
   it "does not override explicitly configured identities with the demo user" do
     seeded = config
     seeded.seed_identities = [{ mail: "real@example.com" }]

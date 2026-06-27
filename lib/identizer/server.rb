@@ -52,12 +52,20 @@ module Identizer
 
     def dispatch(request, response)
       status, headers, body = @app.call(rack_env(request))
+      log_request(request, status)
       response.status = status
       headers.each { |key, value| response[key] = value }
       response.body = +""
       body.each { |chunk| response.body << chunk }
     ensure
       body.close if body.respond_to?(:close)
+    end
+
+    # A concise request line so you can watch the SSO flow as it happens.
+    def log_request(request, status)
+      return unless @config.request_logging
+
+      puts "[identizer] #{Time.now.strftime('%H:%M:%S')} #{request.request_method} #{request.path} -> #{status}"
     end
 
     # Translate a WEBrick request into a minimal Rack env.

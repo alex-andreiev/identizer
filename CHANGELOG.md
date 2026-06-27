@@ -20,6 +20,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The SAML Response is signed in addition to the Assertion (configurable via
   `saml_sign_response`).
 - A `GET /healthz` endpoint reporting status + version.
+- The standalone server logs a concise request line (`METHOD path -> status`) to
+  watch the SSO flow; `--quiet` to disable.
 
 ### Hardening (code-review follow-ups)
 - Tokens/codes now have enforced TTLs via a thread-safe `GrantStore` (codes 10m,
