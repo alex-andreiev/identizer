@@ -20,15 +20,20 @@ module Identizer
 
     def start
       $stdout.sync = true
-      cert, key, cert_path = TLS.resolve(@config)
-      server = build_server(cert, key)
-      server.mount_proc("/") { |request, response| dispatch(request, response) }
-
+      server = mounted_server
       trap("INT") { server.shutdown }
       trap("TERM") { server.shutdown }
-
-      print_banner(cert_path)
+      print_banner(@cert_path)
       server.start
+    end
+
+    # Build the WEBrick server with the Rack app mounted, without starting it.
+    # Exposed so tests can boot/stop it on an ephemeral port.
+    def mounted_server
+      cert, key, @cert_path = TLS.resolve(@config)
+      server = build_server(cert, key)
+      server.mount_proc("/") { |request, response| dispatch(request, response) }
+      server
     end
 
     private

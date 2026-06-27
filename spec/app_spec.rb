@@ -157,6 +157,14 @@ RSpec.describe Identizer::App do
       body = JSON.parse(last_response.body)
       expect(body).to include("access_token", "id_token", "token_type" => "Bearer")
     end
+
+    it "accepts a JSON-encoded token request body" do
+      code = authorize.fetch("code")
+      post "/v1/token", JSON.generate(code: code), "CONTENT_TYPE" => "application/json"
+
+      expect(last_response.status).to eq(200)
+      expect(JSON.parse(last_response.body)).to have_key("id_token")
+    end
   end
 
   describe "OIDC discovery + JWKS" do

@@ -1,5 +1,7 @@
 # Identizer
 
+[![CI](https://github.com/alex-andreiev/identizer/actions/workflows/ci.yml/badge.svg)](https://github.com/alex-andreiev/identizer/actions/workflows/ci.yml)
+
 A local identity provider for developing and testing auth/SSO integrations.
 
 Identizer boots a local IdP that speaks **OIDC** and **OAuth2** and emulates an
@@ -130,9 +132,9 @@ actually signed or verified. A real signed-assertion SAML IdP is on the roadmap.
 ## Development
 
 ```sh
-bin/setup        # or: bundle install
-bundle exec rspec
-bundle exec rubocop
+bin/setup            # install dependencies
+bundle exec rake     # rspec + rubocop
+bin/console          # an IRB session with identizer loaded
 ```
 
 ## License

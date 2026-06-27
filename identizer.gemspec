@@ -18,8 +18,8 @@ Gem::Specification.new do |spec|
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.2"
 
-  spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = spec.homepage
+  spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/main/CHANGELOG.md"
   spec.metadata["rubygems_mfa_required"] = "true"
 
   spec.files = Dir.glob("lib/**/*.rb") + Dir.glob("lib/**/*.erb") + Dir.glob("exe/*") +
@@ -28,11 +28,12 @@ Gem::Specification.new do |spec|
   spec.executables = ["identizer"]
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "jwt", ">= 2.0"
-  spec.add_dependency "rack", ">= 2.2"
-  spec.add_dependency "webrick", ">= 1.7"
+  spec.add_dependency "jwt", ">= 2.0", "< 4"
+  spec.add_dependency "rack", ">= 2.2", "< 4"
+  spec.add_dependency "webrick", "~> 1.7"
 
   spec.add_development_dependency "rack-test", "~> 2.1"
+  spec.add_development_dependency "rake", "~> 13.0"
   spec.add_development_dependency "rspec", "~> 3.13"
   spec.add_development_dependency "rubocop", "~> 1.65"
   spec.add_development_dependency "rubocop-rspec", "~> 3.0"

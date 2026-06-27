@@ -14,10 +14,15 @@ module Identizer
     end
 
     def run
-      config = Identizer.configuration
+      Server.start(configure(Identizer.configuration))
+    end
+
+    # Parse the flags onto a configuration and apply any saved settings, without
+    # starting the server. Separated out so it can be exercised in tests.
+    def configure(config = Identizer.configuration)
       parser(config).parse!(@argv)
       config.apply_persisted_settings! # web-admin saved password/signing
-      Server.start(config)
+      config
     end
 
     private
