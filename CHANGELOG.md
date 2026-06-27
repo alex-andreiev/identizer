@@ -12,8 +12,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - OIDC: PKCE (S256/plain), refresh-token grant (rotated), RP-initiated logout
   (`/v1/logout`), `nonce` in the id_token, `scope` echo, and an optional client
   registry. Discovery advertises these.
-- OIDC and OAuth2 flows, AWS Cognito / Auth0 broker emulation, and cosmetic SAML
-  metadata.
+- OIDC and OAuth2 flows, AWS Cognito / Auth0 broker emulation.
+- Real SAML 2.0 IdP: signed assertions (XML-DSig / RSA-SHA256), metadata, SP- and
+  IdP-initiated SSO with a signed-Response auto-POST (`nokogiri`, loaded on demand).
 - HS256 (default) and RS256 token signing with OIDC discovery and a published JWKS.
 - LDAP-flavoured user directory (`DirectoryEntry`) projected onto OIDC claims.
 - Pluggable identity store (default JSON-file `ConfigStore`); optional

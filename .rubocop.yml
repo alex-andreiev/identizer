@@ -34,6 +34,13 @@ Metrics/AbcSize:
     - "lib/identizer/configuration.rb"
     - "lib/identizer/server.rb"
     - "lib/identizer/tls.rb"
+    - "lib/identizer/saml/keypair.rb"
+    - "spec/**/*"
+
+# The SAML builder threads many SAML-spec parameters through small helpers.
+Metrics/ParameterLists:
+  Exclude:
+    - "lib/identizer/saml/response_builder.rb"
 
 Metrics/CyclomaticComplexity:
   Exclude:

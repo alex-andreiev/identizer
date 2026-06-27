@@ -62,7 +62,9 @@ module Identizer
     # Runtime IdP + protocol surface.
     def idp(request)
       case [request.request_method, request.path_info]
-      in ["GET", "/metadata"] then @saml.metadata(request)
+      in ["GET", "/metadata" | "/saml/metadata"] then @saml.metadata(request)
+      in ["GET" | "POST", "/saml/sso"] then @saml.sso(request)
+      in ["POST", "/saml/finish"] then @saml.finish(request)
       in ["GET", "/login" | "/authorize" | "/v1/authorize"] then @login.form(request)
       in ["GET", "/__select"] then @login.select(request)
       in ["POST", "/oauth2/token"] then @cognito.token(request)

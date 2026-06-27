@@ -7,7 +7,7 @@ module Identizer
     attr_accessor :host, :port, :tls_cert_path, :tls_key_path, :config_dir,
                   :shared_password, :signing, :hs256_key, :scheme, :url_host, :ldap_base_dn,
                   :ldap_host, :ldap_port, :ldaps_port
-    attr_writer :identity_store, :base_url, :issuer, :seed_identities, :providers
+    attr_writer :identity_store, :base_url, :issuer, :seed_identities, :providers, :saml_keypair
 
     def initialize
       @host = "127.0.0.1"
@@ -33,6 +33,14 @@ module Identizer
 
     # When set (e.g. via `--sqlite`), the CLI swaps in the SQLite-backed directory.
     attr_accessor :sqlite_path
+
+    # The IdP's SAML signing key + certificate, generated/persisted on first use.
+    def saml_keypair
+      @saml_keypair ||= begin
+        require "identizer/saml/keypair"
+        Saml::Keypair.load_or_generate(config_dir)
+      end
+    end
 
     # Public URL the provider advertises in metadata, discovery and redirects.
     def base_url
@@ -111,11 +119,12 @@ module Identizer
           ]
         },
         {
-          title: "SAML (cosmetic metadata)",
-          note: "Metadata is served for wiring but not cryptographically verified — see the README.",
+          title: "SAML 2.0",
+          note: "A real signed IdP. Point your SP at the SSO endpoint and metadata below.",
           fields: [
             ["Metadata URL", "#{base_url}/metadata"],
-            ["Email attribute", "email"]
+            ["SSO URL (Redirect/POST)", "#{base_url}/saml/sso"],
+            ["NameID", "emailAddress"]
           ]
         },
         {

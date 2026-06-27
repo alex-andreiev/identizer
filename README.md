@@ -155,11 +155,12 @@ and locally trusted) or falls back to a self-signed cert written under
 `config_dir`. For the app's server-to-server calls, trust it via
 `export SSL_CERT_FILE=…/cert.pem`.
 
-## SAML caveat
+## SAML 2.0
 
-SAML support is currently **cosmetic**: `/metadata` is served so a SAML provider
-can be wired end to end (e.g. brokered through Cognito), but assertions are not
-actually signed or verified. A real signed-assertion SAML IdP is on the roadmap.
+A real SAML IdP: it issues **signed** assertions (XML-DSig, RSA-SHA256) verifiable
+by standard SPs. Metadata at `/metadata`, SSO at `/saml/sso` (Redirect & POST
+bindings), SP- and IdP-initiated. Signing uses `nokogiri`, loaded only when a
+Response is produced. A development IdP — convenient, not hardened.
 
 ## Development
 

@@ -1,20 +1,28 @@
 <p class="muted"><a href="<%= prefix %>/docs">&larr; Docs</a></p>
 <article>
   <h1>SAML</h1>
-  <p class="lead">Identizer serves SAML IdP metadata so a SAML provider can be wired up end to end —
-     typically brokered through Cognito.</p>
+  <p class="lead">A real SAML 2.0 Identity Provider: it issues <strong>signed</strong> assertions
+     (XML-DSig, RSA-SHA256) that standard SPs verify.</p>
 
-  <h2>Metadata</h2>
-  <pre>Metadata URL   <%= h(config.base_url) %>/metadata</pre>
-  <p>Paste this as the provider's <em>Metadata URL</em>, or download it from the Overview to test a
-     <em>Metadata File</em> upload.</p>
+  <h2>Metadata &amp; endpoints</h2>
+  <pre>Metadata URL   <%= h(config.base_url) %>/metadata
+SSO URL        <%= h(config.base_url) %>/saml/sso   (HTTP-Redirect &amp; HTTP-POST)</pre>
+  <p>The metadata embeds the IdP signing certificate, so your SP can validate signatures.</p>
 
-  <h2>Important caveat</h2>
-  <p>SAML support is currently <strong>cosmetic</strong>: the metadata is static and assertions are
-     <em>not</em> cryptographically signed or verified. It exists so the wiring and the brokered login flow
-     can be exercised locally — not to validate real SAML signature handling.</p>
+  <h2>SP-initiated</h2>
+  <p>Send an <span class="mono">AuthnRequest</span> to the SSO URL (redirect or POST binding). Identizer
+     reads the <span class="mono">AssertionConsumerServiceURL</span> and request <span class="mono">ID</span>,
+     shows the login form, then POSTs a signed Response back to your ACS with <span class="mono">InResponseTo</span>
+     set and your <span class="mono">RelayState</span> preserved.</p>
 
-  <h2>Roadmap</h2>
-  <p>A real signed-assertion SAML IdP (and an optional LDAP listener) are planned as additional protocol
-     handlers alongside the existing OIDC / OAuth2 / Cognito surfaces.</p>
+  <h2>IdP-initiated</h2>
+  <pre><%= h(config.base_url) %>/saml/sso?acs=https://your-app/acs&amp;audience=https://your-app/metadata</pre>
+
+  <h2>Attributes</h2>
+  <p>The directory entry's attributes are sent as SAML <span class="mono">Attribute</span>s
+     (<span class="mono">email, given_name, family_name, groups, ...</span>); the NameID is the email.</p>
+
+  <h2>Note</h2>
+  <p>Signing requires the <span class="mono">nokogiri</span> gem (a dependency, loaded only when a Response is
+     produced). It is a development IdP — convenient, not hardened.</p>
 </article>
