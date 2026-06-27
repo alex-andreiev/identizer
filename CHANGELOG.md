@@ -6,85 +6,43 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Added (follow-ups)
-- OIDC token introspection (RFC 7662) at `/introspect` and token revocation
-  (RFC 7009) at `/revoke` (plus the Okta `/oauth2/v1/*` aliases); advertised in
-  discovery.
-- LDAP StartTLS: upgrade a plain LDAP connection to TLS on the `--ldap-port`
-  listener (in addition to implicit-TLS LDAPS).
-- SAML EncryptedAssertion: encrypt the signed assertion (AES-256-CBC + RSA-OAEP)
-  under the SP's certificate (`saml_encrypt_assertion` + `saml_sp_certificate`),
-  for SPs that require encryption. Decryptable by standard SPs (ruby-saml).
-- Edit arbitrary custom attributes per directory entry in the web admin (so any
-  provider-specific claim name can be set without code).
-- The SAML Response is signed in addition to the Assertion (configurable via
-  `saml_sign_response`).
-- A `GET /healthz` endpoint reporting status + version.
-- The standalone server logs a concise request line (`METHOD path -> status`) to
-  watch the SSO flow; `--quiet` to disable.
+## [0.1.0] - 2026-06-27
 
-### Hardening (code-review follow-ups)
-- Tokens/codes now have enforced TTLs via a thread-safe `GrantStore` (codes 10m,
-  access 1h, refresh 24h, all configurable) — expiry is testable and the maps no
-  longer grow unbounded.
-- Optional open-redirect guard: when `clients` are registered, `redirect_uri`
-  must match a registered URI; an optional `saml_allowed_acs` allowlist guards
-  the SAML ACS. Both lenient until configured.
-- SAML `SAMLRequest` size + inflate guards (deflate-bomb protection).
-- Auth0 management registry mutations are mutex-guarded.
+First release. A local identity provider for developing and testing auth/SSO
+integrations.
 
-### Security / correctness (code review, round 2)
-- Validate `redirect_uri` before any redirect (including the error paths) and add
-  a `post_logout_redirect_uri` allowlist — closing two open-redirect gaps.
-- Registered JWT claims (iss/aud/exp/iat/nonce) always win over identity claims,
-  and reserved/standard names are blocked in the directory custom-attributes field,
-  so a directory entry can't forge token claims.
-- `revoke` now invalidates the paired access+refresh token; introspection covers
-  refresh tokens; `expires_in` tracks `access_token_ttl`.
-- GrantStore sweeps expired entries opportunistically (abandoned grants no longer
-  accumulate). Removed the dead `replace_emails`; renamed the codes store.
+### OIDC / OAuth2
+- Authorization-code flow with PKCE (S256/plain), refresh-token grant (rotated,
+  single-use), RP-initiated logout, `nonce` in the id_token, `scope` echo.
+- Token introspection (RFC 7662) and revocation (RFC 7009, revokes the paired
+  token). OIDC discovery + JWKS; HS256 (default) and RS256 signing.
+- AWS Cognito hosted-UI + management-API emulation, Auth0 login + Management API
+  (`/api/v2/clients`, `/api/v2/connections`) for app provisioning/deprovisioning.
+- Okta-style `/oauth2/v1/*` aliases for fixed-path clients; `aud` is the client_id.
+- Optional client registry enabling `redirect_uri` / post-logout allowlists.
 
-### Security / correctness (code review)
-- Enforce PKCE uniformly across all token endpoints (a code can no longer be
-  redeemed at a different endpoint to skip the check).
-- Auth0 flow now consumes the one-time code and returns a distinct access_token
-  (no more unlimited replay / code-as-permanent-token).
-- Private keys (RS256, SAML, TLS) are written with `0600` permissions.
-- id_token `aud` is the requesting `client_id` (falls back to a constant).
-- Friendly error for non-numeric port env vars; the 500 handler logs the
-  backtrace to the server console instead of silently swallowing it.
+### SAML 2.0
+- Real IdP: signed Response + Assertion (XML-DSig / RSA-SHA256), optional
+  EncryptedAssertion (AES-256-CBC + RSA-OAEP), metadata, SP- and IdP-initiated SSO.
+- Attribute names default to Microsoft/WS-Fed claim URIs; fully configurable
+  (`saml_attribute_names`). Optional ACS allowlist; deflate-bomb guards.
 
-### Fixed
-- Renaming a directory entry's email no longer leaves a duplicate row.
+### LDAP
+- Simple-bind authentication and subtree search (equality / presence / substring /
+  `&` `|` `!`) over the same directory; implicit-TLS LDAPS and StartTLS.
 
-### Added
-- Initial release: a local identity provider for developing and testing auth/SSO
-  integrations, extracted and decoupled from the tap-v3 SSO emulator.
-- OIDC: PKCE (S256/plain), refresh-token grant (rotated), RP-initiated logout
-  (`/v1/logout`), `nonce` in the id_token, `scope` echo, and an optional client
-  registry. Discovery advertises these.
-- OIDC and OAuth2 flows, AWS Cognito / Auth0 broker emulation.
-- Auth0 Management API emulation: `client_credentials` token grant plus
-  `/api/v2/clients` and `/api/v2/connections` (create/list/update/delete), so a
-  brokering app can provision/deprovision applications like the Cognito stub.
-- Real SAML 2.0 IdP: signed assertions (XML-DSig / RSA-SHA256), metadata, SP- and
-  IdP-initiated SSO with a signed-Response auto-POST (`nokogiri`, loaded on demand).
-- HS256 (default) and RS256 token signing with OIDC discovery and a published JWKS.
-- LDAP-flavoured user directory (`DirectoryEntry`) projected onto OIDC claims.
-- Pluggable identity store (default JSON-file `ConfigStore`); optional
-  SQLite-backed `SqliteStore` adapter (`--sqlite`, needs the `sqlite3` gem).
-- Web admin UI: Overview, Directory CRUD, Settings (persisted), bundled Docs.
-- Standalone HTTPS server + `identizer` CLI, and a mountable, `SCRIPT_NAME`-aware
-  Rack app.
-- A seeded demo user on first run (`--no-demo` to skip) and a quick-start banner.
-- Okta-style `/oauth2/v1/*` OAuth2 paths for fixed-path clients (e.g.
-  `omniauth-okta`); the OIDC access token resolves at `/userinfo`.
-- SAML attributes default to the Microsoft/WS-Fed claim URIs (configurable via
-  `saml_attribute_names`), matching how real IdPs name them.
-- Custom domain via `--domain` (cert SAN covers it; add it to `/etc/hosts`).
-- Optional LDAP listener (`--ldap-port`): simple bind authentication and subtree
-  search (equality / presence / substring / `&` `|` `!` filters) over the same
-  directory, projecting entries to standard LDAP attributes.
-- Optional LDAPS listener (`--ldaps-port`): implicit TLS reusing the HTTPS cert.
+### Directory & storage
+- LDAP-flavoured user directory (`DirectoryEntry`) projected onto OIDC claims,
+  with arbitrary custom attributes. Pluggable identity store (default JSON
+  `ConfigStore`; optional `SqliteStore`).
 
-[Unreleased]: https://github.com/alex-andreiev/identizer/commits/main
+### Operability & security
+- Standalone HTTPS server + `identizer` CLI; mountable, `SCRIPT_NAME`-aware Rack
+  app. Seeded demo user, quick-start banner, request logging, `/healthz`, custom
+  domain (`--domain`).
+- Thread-safe, TTL-enforced grant store; private keys written `0600`; uniform PKCE
+  enforcement; registered JWT claims protected from directory-attribute forging.
+- `nokogiri` (SAML) and `net-ldap` (LDAP) load lazily; `sqlite3` is optional.
+
+[Unreleased]: https://github.com/alex-andreiev/identizer/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/alex-andreiev/identizer/releases/tag/v0.1.0
