@@ -31,6 +31,9 @@ module Identizer
     # Registered OAuth clients. Empty = accept any client_id (lenient dev default).
     attr_accessor :clients
 
+    # When set (e.g. via `--sqlite`), the CLI swaps in the SQLite-backed directory.
+    attr_accessor :sqlite_path
+
     # Public URL the provider advertises in metadata, discovery and redirects.
     def base_url
       @base_url ||= "#{scheme}://#{url_host}:#{port}"

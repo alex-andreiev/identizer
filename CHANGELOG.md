@@ -16,7 +16,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   metadata.
 - HS256 (default) and RS256 token signing with OIDC discovery and a published JWKS.
 - LDAP-flavoured user directory (`DirectoryEntry`) projected onto OIDC claims.
-- Pluggable identity store (default JSON-file `ConfigStore`).
+- Pluggable identity store (default JSON-file `ConfigStore`); optional
+  SQLite-backed `SqliteStore` adapter (`--sqlite`, needs the `sqlite3` gem).
 - Web admin UI: Overview, Directory CRUD, Settings (persisted), bundled Docs.
 - Standalone HTTPS server + `identizer` CLI, and a mountable, `SCRIPT_NAME`-aware
   Rack app.

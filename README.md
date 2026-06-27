@@ -102,6 +102,23 @@ Any object responding to this duck-typed interface can be a directory:
 The default `Identizer::IdentityStore::ConfigStore` persists identities to a JSON
 file the dashboard writes, seeded from `config.seed_identities`.
 
+### SQLite backend (optional)
+
+Prefer a database? Add `gem "sqlite3"` to your Gemfile and use the bundled adapter
+— it implements the same directory interface, so the web admin and LDAP work
+against it unchanged:
+
+```sh
+bundle exec identizer --sqlite ./dev.sqlite3
+```
+
+```ruby
+require "identizer/identity_store/sqlite_store"
+config.identity_store = Identizer::IdentityStore::SqliteStore.new(path: "dev.sqlite3")
+```
+
+`sqlite3` is not a default dependency — JSON files remain the zero-infra default.
+
 ## Endpoints
 
 | Purpose | Route |

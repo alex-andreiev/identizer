@@ -24,10 +24,20 @@ module Identizer
     def configure(config = Identizer.configuration)
       parser(config).parse!(@argv)
       config.apply_persisted_settings! # web-admin saved password/signing
+      load_sqlite(config) if config.sqlite_path
       config
     end
 
     private
+
+    def load_sqlite(config)
+      require "identizer/identity_store/sqlite_store"
+      config.identity_store = IdentityStore::SqliteStore.new(
+        path: config.sqlite_path, base_dn: config.ldap_base_dn, seed: config.seed_identities
+      )
+    rescue LoadError
+      abort "--sqlite needs the sqlite3 gem. Add `gem \"sqlite3\"` to your Gemfile or `gem install sqlite3`."
+    end
 
     def start_ldap(config)
       return unless config.ldap_port || config.ldaps_port
@@ -51,6 +61,9 @@ module Identizer
         opts.on("--tls-key PATH", "TLS private key (PEM)") { |value| config.tls_key_path = value }
         opts.on("--password PASS", "Shared sign-in password (default 'password')") do |value|
           config.shared_password = value
+        end
+        opts.on("--sqlite PATH", "Use a SQLite-backed directory at PATH (needs the sqlite3 gem)") do |value|
+          config.sqlite_path = value
         end
         opts.on("--rs256", "Sign id_tokens with RS256 + publish JWKS") { config.signing = :rs256 }
         opts.on("--ldap-port PORT", Integer, "Also start an LDAP listener on PORT") { |value| config.ldap_port = value }
