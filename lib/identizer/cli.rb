@@ -14,7 +14,9 @@ module Identizer
     end
 
     def run
-      Server.start(configure(Identizer.configuration))
+      config = configure(Identizer.configuration)
+      start_ldap(config)
+      Server.start(config)
     end
 
     # Parse the flags onto a configuration and apply any saved settings, without
@@ -26,6 +28,13 @@ module Identizer
     end
 
     private
+
+    def start_ldap(config)
+      return unless config.ldap_port
+
+      require "identizer/ldap"
+      Thread.new { Ldap::Server.new(config).start }
+    end
 
     def parser(config)
       OptionParser.new do |opts|
@@ -43,6 +52,8 @@ module Identizer
           config.shared_password = value
         end
         opts.on("--rs256", "Sign id_tokens with RS256 + publish JWKS") { config.signing = :rs256 }
+        opts.on("--ldap-port PORT", Integer, "Also start an LDAP listener on PORT") { |value| config.ldap_port = value }
+        opts.on("--ldap-host HOST", "Bind address for the LDAP listener") { |value| config.ldap_host = value }
         opts.on("-v", "--version", "Print version") do
           puts Identizer::VERSION
           exit

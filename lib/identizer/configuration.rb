@@ -5,7 +5,8 @@ module Identizer
   # the Rails.* / ENV reads of the original emulator with one explicit object.
   class Configuration
     attr_accessor :host, :port, :tls_cert_path, :tls_key_path, :config_dir,
-                  :shared_password, :signing, :hs256_key, :scheme, :url_host, :ldap_base_dn
+                  :shared_password, :signing, :hs256_key, :scheme, :url_host, :ldap_base_dn,
+                  :ldap_host, :ldap_port
     attr_writer :identity_store, :base_url, :issuer, :seed_identities, :providers
 
     def initialize
@@ -20,6 +21,8 @@ module Identizer
       @scheme = "https"
       @url_host = "localhost"
       @ldap_base_dn = "dc=identizer,dc=local"
+      @ldap_host = nil
+      @ldap_port = optional_int_env("IDENTIZER_LDAP_PORT") # nil = LDAP listener off
       @seed_identities = []
     end
 
@@ -125,6 +128,11 @@ module Identizer
         return value if value && !value.empty?
       end
       nil
+    end
+
+    def optional_int_env(key)
+      value = env_presence(key)
+      value && Integer(value)
     end
   end
 end

@@ -115,6 +115,21 @@ file the dashboard writes, seeded from `config.seed_identities`.
 | SAML metadata | `GET /metadata` |
 | Cognito management API | `POST /` with `x-amz-target` (point `COGNITO_ENDPOINT` here) |
 
+## LDAP listener (optional)
+
+Apps that authenticate via LDAP can bind and search against the same directory.
+It's off unless you ask for it:
+
+```sh
+bundle exec identizer --port 9999 --ldap-port 1389
+# ldapsearch -x -H ldap://localhost:1389 -b dc=identizer,dc=local "(mail=alice@example.com)"
+```
+
+Simple bind (user DN + shared password, or anonymous) and subtree search with
+equality / presence / substring / `&` `|` `!` filters. Entries project to
+`uid, cn, sn, givenName, mail, ou, memberOf, objectClass`. Plain TCP + simple
+bind — a development listener, not LDAPS.
+
 ## TLS
 
 Login URLs must be `https` (browser popup guards reject `http`). Identizer uses a

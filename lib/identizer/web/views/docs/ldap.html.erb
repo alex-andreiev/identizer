@@ -1,0 +1,29 @@
+<p class="muted"><a href="<%= prefix %>/docs">&larr; Docs</a></p>
+<article>
+  <h1>LDAP listener</h1>
+  <p class="lead">Identizer can also expose the directory over LDAP, so apps that authenticate via
+     <span class="mono">ldap://</span> (simple bind + search) can test against it — the same users you
+     manage in the <a href="<%= prefix %>/directory">Directory</a>.</p>
+
+  <h2>Enable it</h2>
+  <pre>bundle exec identizer --port 9999 --ldap-port 1389</pre>
+  <p>The listener is off unless <span class="mono">--ldap-port</span> (or
+     <span class="mono">IDENTIZER_LDAP_PORT</span>) is set.</p>
+
+  <h2>Bind</h2>
+  <p>Simple bind with a user's DN and the shared password:</p>
+  <pre>uid=alice,ou=people,<%= h(config.ldap_base_dn) %>   /   password = the shared sign-in password</pre>
+  <p>An empty DN + empty password is accepted as an anonymous bind.</p>
+
+  <h2>Search</h2>
+  <p>Subtree search under the base DN <span class="mono"><%= h(config.ldap_base_dn) %></span>. Supported
+     filters: equality (<span class="mono">(mail=a@b.com)</span>), presence
+     (<span class="mono">(objectClass=*)</span>), substrings, and <span class="mono">&amp;</span> /
+     <span class="mono">|</span> / <span class="mono">!</span> combinations.</p>
+  <p>Entries are projected to standard attributes: <span class="mono">uid, cn, sn, givenName, mail, ou,
+     memberOf, objectClass</span>.</p>
+
+  <h2>Scope</h2>
+  <p>This is a development listener (plain TCP, simple bind). It is not LDAPS/StartTLS and is not intended
+     for production directories.</p>
+</article>

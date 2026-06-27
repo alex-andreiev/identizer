@@ -9,6 +9,7 @@ module Identizer
       { slug: "oidc", title: "OIDC integration" },
       { slug: "cognito", title: "AWS Cognito broker" },
       { slug: "saml", title: "SAML" },
+      { slug: "ldap", title: "LDAP listener" },
       { slug: "tls", title: "TLS & mkcert" },
       { slug: "troubleshooting", title: "Troubleshooting" }
     ].freeze

@@ -90,6 +90,7 @@ module Identizer
         ────────────────────────────────────────────────────────────
         Dashboard (identities + provider cheatsheet):
           #{base}/
+        #{ldap_banner_line}
 
         TLS cert: #{cert_path}
         Trust it for the app's server-to-server calls (token/userinfo + AWS SDK):
@@ -98,6 +99,12 @@ module Identizer
           or (self-signed) export SSL_CERT_FILE=#{cert_path} for the app process.
         ────────────────────────────────────────────────────────────
       BANNER
+    end
+
+    def ldap_banner_line
+      return "" unless @config.ldap_port
+
+      "LDAP listener: ldap://#{@config.ldap_host || @config.host}:#{@config.ldap_port}\n"
     end
   end
 end

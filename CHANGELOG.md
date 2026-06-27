@@ -17,5 +17,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Web admin UI: Overview, Directory CRUD, Settings (persisted), bundled Docs.
 - Standalone HTTPS server + `identizer` CLI, and a mountable, `SCRIPT_NAME`-aware
   Rack app.
+- Optional LDAP listener (`--ldap-port`): simple bind authentication and subtree
+  search (equality / presence / substring / `&` `|` `!` filters) over the same
+  directory, projecting entries to standard LDAP attributes.
 
 [Unreleased]: https://github.com/alex-andreiev/identizer/commits/main
